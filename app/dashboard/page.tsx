@@ -6,13 +6,14 @@ import { auth } from "../lib/tanstack/auth";
 import FileTransferTracking from "./FileTransferTracking";
 import Proposal from "../dashboard/Proposal";
 import Quotation from "./Quotation";
+import Customer from "./customer"; // Bounded path adjustment if needed
 
 export default function DashboardPage() {
   const router = useRouter();
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "file-transfer" | "proposal" | "quotation"
+    "file-transfer" | "proposal" | "quotation" | "customer"
   >("file-transfer");
 
   useEffect(() => {
@@ -191,6 +192,42 @@ export default function DashboardPage() {
               </div>
             )}
           </button>
+
+          {/* Customer Item */}
+          <button
+            onClick={() => setActiveTab("customer")}
+            className={`group relative flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all ${
+              isSidebarCollapsed ? "justify-center px-0" : ""
+            } ${
+              activeTab === "customer"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
+                : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
+            }`}
+          >
+            <svg
+              className="h-5 w-5 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+
+            {!isSidebarCollapsed && (
+              <span className="truncate">Customers</span>
+            )}
+
+            {isSidebarCollapsed && (
+              <div className="absolute left-full z-50 ml-3 hidden rounded-md bg-slate-900 px-2.5 py-1 text-xs text-white shadow-lg whitespace-nowrap group-hover:block">
+                Customers
+              </div>
+            )}
+          </button>
         </nav>
 
         {/* Footer / Logout */}
@@ -236,7 +273,9 @@ export default function DashboardPage() {
                 ? "File Transfer Tracking"
                 : activeTab === "proposal"
                 ? "Proposal Management"
-                : "Quotation Management"}
+                : activeTab === "quotation"
+                ? "Quotation Management"
+                : "Customer Management"}
             </h2>
             <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 capitalize">
               {activeTab.replace("-", " ")}
@@ -256,6 +295,7 @@ export default function DashboardPage() {
             {activeTab === "file-transfer" && <FileTransferTracking />}
             {activeTab === "proposal" && <Proposal />}
             {activeTab === "quotation" && <Quotation />}
+            {activeTab === "customer" && <Customer />}
           </div>
         </div>
       </main>
