@@ -1,20 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-// lightweight fallback for react-hot-toast when the module or types are unavailable
-// Keeps API surface minimal: toast.success and toast.error
+
+// lightweight fallback for react-hot-toast
 const toast = {
   success: (msg: string) => {
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line no-console
-      console.log("SUCCESS:", msg);
-    }
+    if (typeof window !== "undefined") console.log("SUCCESS:", msg);
   },
   error: (msg: string) => {
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line no-console
-      console.error("ERROR:", msg);
-    }
+    if (typeof window !== "undefined") console.error("ERROR:", msg);
   },
 };
 
@@ -70,7 +64,6 @@ export default function QuotationComponent() {
     customerName: "",
     currency: "LKR",
     quotationType: "PRIVATE_HOUSE",
-
     residentialRisk: {
       propertyName: "",
       locationAddress: "",
@@ -85,7 +78,6 @@ export default function QuotationComponent() {
       occupancyType: "",
       isSecuredGatedProperty: false,
     },
-
     commercialRisk: {
       propertyName: "",
       locationAddress: "",
@@ -100,7 +92,6 @@ export default function QuotationComponent() {
       hasKitchenOrCookingFacility: false,
       hasHoseReels: false,
     },
-
     industrialRisk: {
       propertyName: "",
       locationAddress: "",
@@ -131,9 +122,7 @@ export default function QuotationComponent() {
       const matchesSearch =
         q.customerName.toLowerCase().includes(search.toLowerCase()) ||
         q.quotationReference.toLowerCase().includes(search.toLowerCase());
-
       const matchesStatus = statusFilter === "ALL" || q.status === statusFilter;
-
       return matchesSearch && matchesStatus;
     });
   }, [quotations, search, statusFilter]);
@@ -141,15 +130,15 @@ export default function QuotationComponent() {
   const getStatusBadge = (status: QuotationStatus) => {
     switch (status) {
       case "DRAFT":
-        return "bg-amber-100 text-amber-700 border-amber-200";
+        return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
       case "APPROVED":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
+        return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
       case "ISSUED":
-        return "bg-blue-100 text-blue-700 border-blue-200";
+        return "bg-blue-50 text-blue-700 ring-1 ring-blue-200";
       case "REJECTED":
-        return "bg-red-100 text-red-700 border-red-200";
+        return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
       default:
-        return "bg-slate-100 text-slate-700 border-slate-200";
+        return "bg-slate-50 text-slate-700 ring-1 ring-slate-200";
     }
   };
 
@@ -174,7 +163,6 @@ export default function QuotationComponent() {
 
   const handleApprove = async (id: number) => {
     if (!confirm("Approve this quotation?")) return;
-
     try {
       setActionLoadingId(id);
       await approveQuotation.mutateAsync(id);
@@ -194,7 +182,6 @@ export default function QuotationComponent() {
 
   const confirmReject = async () => {
     if (!selectedQuotation) return;
-
     try {
       setActionLoadingId(selectedQuotation.id);
       await rejectQuotation.mutateAsync({
@@ -224,7 +211,6 @@ export default function QuotationComponent() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this quotation?")) return;
-
     try {
       setActionLoadingId(id);
       await deleteQuotation.mutateAsync(id);
@@ -264,49 +250,62 @@ export default function QuotationComponent() {
     }
   };
 
+  const inputClass =
+    "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10";
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* ─── Header ─────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
             Quotation Management
           </h2>
-          <p className="text-sm text-slate-500">
-            Create, calculate, and manage customer quotations.
+          <p className="mt-1 text-sm text-slate-500">
+            Create, calculate, approve and manage customer quotations
           </p>
         </div>
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition-all hover:bg-emerald-700 active:scale-95"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700 active:scale-[0.98]"
         >
-          + New Quotation
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          New Quotation
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
-        <SummaryCard title="Total" value={total} color="emerald" />
-        <SummaryCard title="Draft" value={draft} color="amber" />
-        <SummaryCard title="Approved" value={approved} color="green" />
-        <SummaryCard title="Issued" value={issued} color="blue" />
-        <SummaryCard title="Rejected" value={rejected} color="red" />
+      {/* ─── Summary Cards ──────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <SummaryCard title="Total" value={total} accent="emerald" />
+        <SummaryCard title="Draft" value={draft} accent="amber" />
+        <SummaryCard title="Approved" value={approved} accent="emerald" />
+        <SummaryCard title="Issued" value={issued} accent="blue" />
+        <SummaryCard title="Rejected" value={rejected} accent="rose" />
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center">
-        <input
-          placeholder="Search by reference or customer name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:bg-white"
-        />
+      {/* ─── Toolbar ────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            placeholder="Search by reference or customer name…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+          />
+        </div>
 
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-500"
+          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
         >
           <option value="ALL">All Status</option>
           <option value="DRAFT">Draft</option>
@@ -316,132 +315,142 @@ export default function QuotationComponent() {
         </select>
       </div>
 
-      {/* Quotations Table */}
+      {/* ─── Table ──────────────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              <tr>
-                <th className="px-5 py-4">Ref</th>
-                <th className="px-5 py-4">Customer</th>
-                <th className="px-5 py-4">Type</th>
-                <th className="px-5 py-4">Premium</th>
-                <th className="px-5 py-4">Status</th>
-                <th className="px-5 py-4 text-right">Actions</th>
+          <table className="min-w-full divide-y divide-slate-100">
+            <thead>
+              <tr className="bg-slate-50/80">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Ref
+                </th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Customer
+                </th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Type
+                </th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Premium
+                </th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Status
+                </th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Actions
+                </th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-100">
               {isLoading && (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center text-slate-500">
-                    Loading quotations...
+                  <td colSpan={6} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-emerald-600 border-t-transparent" />
+                      <p className="text-sm text-slate-500">Loading quotations…</p>
+                    </div>
                   </td>
                 </tr>
               )}
 
               {!isLoading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center text-slate-500">
-                    No quotations found
+                  <td colSpan={6} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                        <svg className="h-7 w-7 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m-6 4h6m-6 4h4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-base font-semibold text-slate-800">No quotations found</h3>
+                      <p className="mt-1.5 text-sm text-slate-500">
+                        {search || statusFilter !== "ALL"
+                          ? "Try adjusting your filters."
+                          : "Create your first quotation to get started."}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}
 
               {!isLoading &&
                 filtered.map((quotation) => (
-                  <tr
-                    key={quotation.id}
-                    className="transition-colors hover:bg-slate-50"
-                  >
+                  <tr key={quotation.id} className="transition-colors hover:bg-slate-50/70">
                     <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-900">
                       {quotation.quotationReference}
                     </td>
-
-                    <td className="whitespace-nowrap px-5 py-4">
+                    <td className="whitespace-nowrap px-5 py-4 text-slate-800">
                       {quotation.customerName}
                     </td>
-
-                    <td className="whitespace-nowrap px-5 py-4">
-                      {quotation.quotationType}
+                    <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                      {quotation.quotationType.replace(/_/g, " ")}
                     </td>
-
                     <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-900">
                       {quotation.grandTotalPremium}
                     </td>
-
                     <td className="whitespace-nowrap px-5 py-4">
                       <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadge(
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadge(
                           quotation.status
                         )}`}
                       >
                         {quotation.status}
                       </span>
                     </td>
-
-                    <td className="whitespace-nowrap px-5 py-4 text-right">
+                    <td className="whitespace-nowrap px-5 py-4">
                       <div className="flex flex-wrap items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => handleView(quotation)}
-                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                        >
+                        <ActionBtn onClick={() => handleView(quotation)} variant="ghost">
                           View
-                        </button>
-
-                        <button
-                          disabled={actionLoadingId === quotation.id}
+                        </ActionBtn>
+                        <ActionBtn
                           onClick={() => handleCalculate(quotation.id)}
-                          className="rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                          disabled={actionLoadingId === quotation.id}
+                          variant="blue"
                         >
-                          {actionLoadingId === quotation.id ? "..." : "Calculate"}
-                        </button>
-
-                        <button
+                          {actionLoadingId === quotation.id ? "…" : "Calc"}
+                        </ActionBtn>
+                        <ActionBtn
+                          onClick={() => handleApprove(quotation.id)}
                           disabled={
                             quotation.status === "APPROVED" ||
                             actionLoadingId === quotation.id
                           }
-                          onClick={() => handleApprove(quotation.id)}
-                          className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                          variant="emerald"
                         >
                           Approve
-                        </button>
-
-                        <button
+                        </ActionBtn>
+                        <ActionBtn
+                          onClick={() => handleReject(quotation)}
                           disabled={
                             quotation.status === "REJECTED" ||
                             actionLoadingId === quotation.id
                           }
-                          onClick={() => handleReject(quotation)}
-                          className="rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                          variant="rose"
                         >
                           Reject
-                        </button>
-
-                        <button
-                          disabled={actionLoadingId === quotation.id}
+                        </ActionBtn>
+                        <ActionBtn
                           onClick={() => handleDuplicate(quotation.id)}
-                          className="rounded-lg bg-orange-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50"
-                        >
-                          Duplicate
-                        </button>
-
-                        <button
                           disabled={actionLoadingId === quotation.id}
+                          variant="orange"
+                        >
+                          Dup
+                        </ActionBtn>
+                        <ActionBtn
                           onClick={() => handlePdf(quotation.id)}
-                          className="rounded-lg bg-purple-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+                          disabled={actionLoadingId === quotation.id}
+                          variant="purple"
                         >
                           PDF
-                        </button>
-
-                        <button
-                          disabled={actionLoadingId === quotation.id}
+                        </ActionBtn>
+                        <ActionBtn
                           onClick={() => handleDelete(quotation.id)}
-                          className="rounded-lg bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-black disabled:opacity-50"
+                          disabled={actionLoadingId === quotation.id}
+                          variant="dark"
                         >
-                          Delete
-                        </button>
+                          Del
+                        </ActionBtn>
                       </div>
                     </td>
                   </tr>
@@ -451,51 +460,48 @@ export default function QuotationComponent() {
         </div>
       </div>
 
-      {/* Create Modal */}
+      {/* ─── Create Modal ───────────────────────────────────────────── */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-8 shadow-xl">
-            <div className="mb-6 flex items-center justify-between border-b pb-4">
-              <h2 className="text-xl font-bold text-slate-800">
-                Create Quotation
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Create Quotation</h2>
+                <p className="text-sm text-slate-500">Fill in the risk details below</p>
+              </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-2xl font-semibold text-slate-400 hover:text-slate-600"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
               >
-                ×
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-5 p-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
                     Customer Name
                   </label>
                   <input
-                    placeholder="Customer Name"
+                    placeholder="Customer full name"
                     value={form.customerName}
-                    onChange={(e) =>
-                      setForm({ ...form, customerName: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-slate-200 p-2.5 text-sm"
+                    onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+                    className={inputClass}
                   />
                 </div>
-
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
                     Currency
                   </label>
                   <select
                     value={form.currency}
                     onChange={(e) =>
-                      setForm({
-                        ...form,
-                        currency: e.target.value as CurrencyType,
-                      })
+                      setForm({ ...form, currency: e.target.value as CurrencyType })
                     }
-                    className="w-full rounded-lg border border-slate-200 p-2.5 text-sm"
+                    className={inputClass}
                   >
                     <option value="LKR">LKR</option>
                     <option value="USD">USD</option>
@@ -505,7 +511,7 @@ export default function QuotationComponent() {
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
                   Quotation Type
                 </label>
                 <select
@@ -516,196 +522,212 @@ export default function QuotationComponent() {
                       quotationType: e.target.value as QuotationType,
                     })
                   }
-                  className="w-full rounded-lg border border-slate-200 p-2.5 text-sm"
+                  className={inputClass}
                 >
                   <option value="PRIVATE_HOUSE">Private House</option>
                   <option value="BUSINESS_PREMISES">Business Premises</option>
-                  <option value="INDUSTRIAL_PREMISES">
-                    Industrial Premises
-                  </option>
+                  <option value="INDUSTRIAL_PREMISES">Industrial Premises</option>
                 </select>
               </div>
 
-              {/* Dynamic Risk Inputs */}
+              {/* Dynamic Risk Sections */}
               {form.quotationType === "PRIVATE_HOUSE" && (
-                <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                  <input
-                    placeholder="Property Name"
-                    value={form.residentialRisk.propertyName}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        residentialRisk: {
-                          ...form.residentialRisk,
-                          propertyName: e.target.value,
-                        },
-                      })
-                    }
-                    className="rounded-lg border border-slate-200 p-2.5 text-sm"
-                  />
-                  <input
-                    placeholder="Location Address"
-                    value={form.residentialRisk.locationAddress}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        residentialRisk: {
-                          ...form.residentialRisk,
-                          locationAddress: e.target.value,
-                        },
-                      })
-                    }
-                    className="rounded-lg border border-slate-200 p-2.5 text-sm"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Building Sum Insured"
-                    value={form.residentialRisk.buildingSumInsured || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        residentialRisk: {
-                          ...form.residentialRisk,
-                          buildingSumInsured: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="rounded-lg border border-slate-200 p-2.5 text-sm"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Contents Sum Insured"
-                    value={form.residentialRisk.contentsSumInsured || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        residentialRisk: {
-                          ...form.residentialRisk,
-                          contentsSumInsured: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="rounded-lg border border-slate-200 p-2.5 text-sm"
-                  />
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                  <h4 className="mb-3 text-sm font-semibold text-slate-800">
+                    Residential Risk Details
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <input
+                      placeholder="Property Name"
+                      value={form.residentialRisk.propertyName}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          residentialRisk: {
+                            ...form.residentialRisk,
+                            propertyName: e.target.value,
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                    <input
+                      placeholder="Location Address"
+                      value={form.residentialRisk.locationAddress}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          residentialRisk: {
+                            ...form.residentialRisk,
+                            locationAddress: e.target.value,
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Building Sum Insured"
+                      value={form.residentialRisk.buildingSumInsured || ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          residentialRisk: {
+                            ...form.residentialRisk,
+                            buildingSumInsured: Number(e.target.value),
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Contents Sum Insured"
+                      value={form.residentialRisk.contentsSumInsured || ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          residentialRisk: {
+                            ...form.residentialRisk,
+                            contentsSumInsured: Number(e.target.value),
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
               )}
 
               {form.quotationType === "BUSINESS_PREMISES" && (
-                <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                  <input
-                    placeholder="Business Activity"
-                    value={form.commercialRisk.businessActivity}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        commercialRisk: {
-                          ...form.commercialRisk,
-                          businessActivity: e.target.value,
-                        },
-                      })
-                    }
-                    className="rounded-lg border border-slate-200 p-2.5 text-sm"
-                  />
-                  <input
-                    placeholder="Property Name"
-                    value={form.commercialRisk.propertyName}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        commercialRisk: {
-                          ...form.commercialRisk,
-                          propertyName: e.target.value,
-                        },
-                      })
-                    }
-                    className="rounded-lg border border-slate-200 p-2.5 text-sm"
-                  />
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                  <h4 className="mb-3 text-sm font-semibold text-slate-800">
+                    Commercial Risk Details
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <input
+                      placeholder="Business Activity"
+                      value={form.commercialRisk.businessActivity}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          commercialRisk: {
+                            ...form.commercialRisk,
+                            businessActivity: e.target.value,
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                    <input
+                      placeholder="Property Name"
+                      value={form.commercialRisk.propertyName}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          commercialRisk: {
+                            ...form.commercialRisk,
+                            propertyName: e.target.value,
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
               )}
 
               {form.quotationType === "INDUSTRIAL_PREMISES" && (
-                <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                  <input
-                    placeholder="Manufacturing Type"
-                    value={form.industrialRisk.manufacturingType}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        industrialRisk: {
-                          ...form.industrialRisk,
-                          manufacturingType: e.target.value,
-                        },
-                      })
-                    }
-                    className="rounded-lg border border-slate-200 p-2.5 text-sm"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Machinery Sum Insured"
-                    value={form.industrialRisk.machinerySumInsured || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        industrialRisk: {
-                          ...form.industrialRisk,
-                          machinerySumInsured: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="rounded-lg border border-slate-200 p-2.5 text-sm"
-                  />
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                  <h4 className="mb-3 text-sm font-semibold text-slate-800">
+                    Industrial Risk Details
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <input
+                      placeholder="Manufacturing Type"
+                      value={form.industrialRisk.manufacturingType}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          industrialRisk: {
+                            ...form.industrialRisk,
+                            manufacturingType: e.target.value,
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Machinery Sum Insured"
+                      value={form.industrialRisk.machinerySumInsured || ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          industrialRisk: {
+                            ...form.industrialRisk,
+                            machinerySumInsured: Number(e.target.value),
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="mt-8 flex justify-end gap-3 border-t pt-4">
+            <div className="sticky bottom-0 flex justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="rounded-lg border border-slate-200 px-5 py-2 text-sm font-medium hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateQuotation}
                 disabled={createQuotation.isPending}
-                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700 disabled:opacity-60"
               >
-                {createQuotation.isPending ? "Creating..." : "Create Quotation"}
+                {createQuotation.isPending ? "Creating…" : "Create Quotation"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Reject Reason Modal */}
+      {/* ─── Reject Modal ───────────────────────────────────────────── */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-slate-800">
-              Reject Quotation
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50">
+              <svg className="h-5 w-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Reject Quotation</h3>
             <p className="mt-1 text-sm text-slate-500">
-              Please enter the reason for rejecting this quotation.
+              Please provide a reason for rejecting this quotation.
             </p>
 
             <textarea
               rows={3}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Reason for rejection..."
-              className="mt-4 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-red-500"
+              placeholder="Reason for rejection…"
+              className="mt-4 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none transition focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
             />
 
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setShowRejectModal(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmReject}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
               >
                 Confirm Reject
               </button>
@@ -714,52 +736,74 @@ export default function QuotationComponent() {
         </div>
       )}
 
-      {/* View Details Modal */}
+      {/* ─── View Modal ─────────────────────────────────────────────── */}
       {showViewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="text-lg font-bold text-slate-800">
-                Quotation Details
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+              <h3 className="text-lg font-bold text-slate-900">Quotation Details</h3>
               <button
                 onClick={() => setShowViewModal(false)}
-                className="text-2xl text-slate-400 hover:text-slate-600"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
               >
-                ×
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
-            <div className="mt-4 space-y-3 text-sm text-slate-600">
-              <p>
-                <strong>Ref:</strong> {selectedQuotation?.quotationReference}
-              </p>
-              <p>
-                <strong>Customer Name:</strong> {selectedQuotation?.customerName}
-              </p>
-              <p>
-                <strong>Type:</strong> {selectedQuotation?.quotationType}
-              </p>
-              <p>
-                <strong>Status:</strong> {selectedQuotation?.status}
-              </p>
-              <p>
-                <strong>Grand Total Premium:</strong>{" "}
-                {selectedQuotation?.grandTotalPremium}
-              </p>
+            <div className="space-y-4 p-6 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Reference</p>
+                  <p className="mt-0.5 font-semibold text-slate-900">
+                    {selectedQuotation?.quotationReference}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Status</p>
+                  <p className="mt-0.5 font-semibold text-slate-900">
+                    {selectedQuotation?.status}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Customer</p>
+                  <p className="mt-0.5 font-semibold text-slate-900">
+                    {selectedQuotation?.customerName}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Type</p>
+                  <p className="mt-0.5 font-semibold text-slate-900">
+                    {selectedQuotation?.quotationType?.replace(/_/g, " ")}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs font-medium text-slate-500">
+                    Grand Total Premium
+                  </p>
+                  <p className="mt-0.5 text-lg font-bold text-emerald-600">
+                    {selectedQuotation?.grandTotalPremium}
+                  </p>
+                </div>
+              </div>
+
               {quotationDetails && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <pre className="whitespace-pre-wrap text-xs text-slate-700">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Full Details
+                  </p>
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap text-xs text-slate-700">
                     {JSON.stringify(quotationDetails, null, 2)}
                   </pre>
                 </div>
               )}
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="flex justify-end border-t border-slate-100 px-6 py-4">
               <button
                 onClick={() => setShowViewModal(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 Close
               </button>
@@ -771,32 +815,64 @@ export default function QuotationComponent() {
   );
 }
 
-// Summary Card Sub-component
+/* ─── Sub Components ───────────────────────────────────────────────── */
+
 function SummaryCard({
   title,
   value,
-  color,
+  accent,
 }: {
   title: string;
   value: number;
-  color: "emerald" | "amber" | "green" | "blue" | "red";
+  accent: "emerald" | "amber" | "blue" | "rose";
 }) {
-  const textColorMap = {
-    emerald: "text-emerald-600",
-    amber: "text-amber-600",
-    green: "text-green-600",
-    blue: "text-blue-600",
-    red: "text-red-600",
+  const styles = {
+    emerald: "text-emerald-600 bg-emerald-50",
+    amber: "text-amber-600 bg-amber-50",
+    blue: "text-blue-600 bg-blue-50",
+    rose: "text-rose-600 bg-rose-50",
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
       <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
         {title}
       </p>
-      <h2 className={`mt-2 text-3xl font-bold ${textColorMap[color]}`}>
+      <p className={`mt-2 text-3xl font-bold tracking-tight ${styles[accent].split(" ")[0]}`}>
         {value}
-      </h2>
+      </p>
     </div>
+  );
+}
+
+function ActionBtn({
+  children,
+  onClick,
+  disabled,
+  variant = "ghost",
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  variant?: "ghost" | "blue" | "emerald" | "rose" | "orange" | "purple" | "dark";
+}) {
+  const variants = {
+    ghost: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+    blue: "bg-blue-600 text-white hover:bg-blue-700",
+    emerald: "bg-emerald-600 text-white hover:bg-emerald-700",
+    rose: "bg-rose-600 text-white hover:bg-rose-700",
+    orange: "bg-orange-500 text-white hover:bg-orange-600",
+    purple: "bg-purple-600 text-white hover:bg-purple-700",
+    dark: "bg-slate-800 text-white hover:bg-slate-900",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${variants[variant]}`}
+    >
+      {children}
+    </button>
   );
 }
