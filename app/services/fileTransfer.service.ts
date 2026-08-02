@@ -62,3 +62,8 @@ export const dispatchShipment = async ({
 
   return res.data;
 };
+
+export const getIncomingShipments = async (): Promise<ShipmentResponse[]> => {
+  const res = await api.get("/api/file-transfer/shipments/incoming");
+  return res.data;
+};

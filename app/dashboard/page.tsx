@@ -6,7 +6,7 @@ import { auth } from "../lib/tanstack/auth";
 import FileTransferTracking from "./FileTransferTracking";
 import Proposal from "../dashboard/Proposal";
 import Quotation from "./Quotation";
-import Customer from "./customer"; // Bounded path adjustment if needed
+import Customer from "./customer";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -27,278 +27,212 @@ export default function DashboardPage() {
     router.replace("/login");
   };
 
+  const navItems = [
+    {
+      id: "file-transfer" as const,
+      label: "File Transfer",
+      icon: (
+        <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+      ),
+    },
+    {
+      id: "proposal" as const,
+      label: "Proposals",
+      icon: (
+        <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+        </svg>
+      ),
+    },
+    {
+      id: "quotation" as const,
+      label: "Quotations",
+      icon: (
+        <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m-6 4h6m-6 4h4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+        </svg>
+      ),
+    },
+    {
+      id: "customer" as const,
+      label: "Customers",
+      icon: (
+        <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case "file-transfer":
+        return "File Transfer Tracking";
+      case "proposal":
+        return "Proposal Management";
+      case "quotation":
+        return "Quotation Management";
+      case "customer":
+        return "Customer Management";
+      default:
+        return "Dashboard";
+    }
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden bg-emerald-50/40 text-slate-800">
-      {/* Sidebar */}
+    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-800">
+      {/* ─── Sidebar ─────────────────────────────────────────────────── */}
       <aside
-        className={`relative flex flex-col border-r border-emerald-100 bg-white shadow-sm transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? "w-20" : "w-64"
+        className={`relative z-20 flex flex-col border-r border-slate-200/80 bg-white shadow-sm transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? "w-[72px]" : "w-64"
         }`}
       >
-        {/* Sidebar Header / Brand */}
-        <div className="flex h-16 items-center justify-between border-b border-emerald-100 px-4">
-          {!isSidebarCollapsed && (
+        {/* Brand */}
+        <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4">
+          {!isSidebarCollapsed ? (
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-200">
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <span className="text-base font-bold tracking-tight text-slate-900">
-                Insurance<span className="text-emerald-600">App</span>
-              </span>
+              <div>
+                <p className="text-sm font-bold tracking-tight text-slate-900">
+                  SecureCover
+                </p>
+                <p className="text-[11px] text-slate-400">Insurance System</p>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-200">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
             </div>
           )}
 
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600 ${
-              isSidebarCollapsed ? "mx-auto" : ""
-            }`}
-            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <svg
-              className={`h-4 w-4 transition-transform duration-300 ${
-                isSidebarCollapsed ? "rotate-180" : ""
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
+          {!isSidebarCollapsed && (
+            <button
+              onClick={() => setIsSidebarCollapsed(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+              title="Collapse sidebar"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-              />
-            </svg>
-          </button>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1.5 p-3">
-          {/* File Transfer Item */}
-          <button
-            onClick={() => setActiveTab("file-transfer")}
-            className={`group relative flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all ${
-              isSidebarCollapsed ? "justify-center px-0" : ""
-            } ${
-              activeTab === "file-transfer"
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
-                : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
-            }`}
-          >
-            <svg
-              className="h-5 w-5 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
+        <nav className="flex-1 space-y-1 p-3">
+          {isSidebarCollapsed && (
+            <button
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="mb-2 flex w-full items-center justify-center rounded-xl py-2.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+              title="Expand sidebar"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-              />
-            </svg>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
 
-            {!isSidebarCollapsed && (
-              <span className="truncate">File Transfer</span>
-            )}
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`group relative flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${
+                  isSidebarCollapsed ? "justify-center px-0" : ""
+                } ${
+                  isActive
+                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-200/60"
+                    : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
+                }`}
+              >
+                {item.icon}
+                {!isSidebarCollapsed && (
+                  <span className="truncate">{item.label}</span>
+                )}
 
-            {isSidebarCollapsed && (
-              <div className="absolute left-full z-50 ml-3 hidden rounded-md bg-slate-900 px-2.5 py-1 text-xs text-white shadow-lg whitespace-nowrap group-hover:block">
-                File Transfer
-              </div>
-            )}
-          </button>
-
-          {/* Proposal Item */}
-          <button
-            onClick={() => setActiveTab("proposal")}
-            className={`group relative flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all ${
-              isSidebarCollapsed ? "justify-center px-0" : ""
-            } ${
-              activeTab === "proposal"
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
-                : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
-            }`}
-          >
-            <svg
-              className="h-5 w-5 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"
-              />
-            </svg>
-
-            {!isSidebarCollapsed && <span className="truncate">Proposal</span>}
-
-            {isSidebarCollapsed && (
-              <div className="absolute left-full z-50 ml-3 hidden rounded-md bg-slate-900 px-2.5 py-1 text-xs text-white shadow-lg whitespace-nowrap group-hover:block">
-                Proposal
-              </div>
-            )}
-          </button>
-
-          {/* Quotation Item */}
-          <button
-            onClick={() => setActiveTab("quotation")}
-            className={`group relative flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all ${
-              isSidebarCollapsed ? "justify-center px-0" : ""
-            } ${
-              activeTab === "quotation"
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
-                : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
-            }`}
-          >
-            <svg
-              className="h-5 w-5 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 7h6m-6 4h6m-6 4h4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"
-              />
-            </svg>
-
-            {!isSidebarCollapsed && (
-              <span className="truncate">Quotations</span>
-            )}
-
-            {isSidebarCollapsed && (
-              <div className="absolute left-full z-50 ml-3 hidden rounded-md bg-slate-900 px-2.5 py-1 text-xs text-white shadow-lg whitespace-nowrap group-hover:block">
-                Quotations
-              </div>
-            )}
-          </button>
-
-          {/* Customer Item */}
-          <button
-            onClick={() => setActiveTab("customer")}
-            className={`group relative flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all ${
-              isSidebarCollapsed ? "justify-center px-0" : ""
-            } ${
-              activeTab === "customer"
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
-                : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
-            }`}
-          >
-            <svg
-              className="h-5 w-5 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-
-            {!isSidebarCollapsed && (
-              <span className="truncate">Customers</span>
-            )}
-
-            {isSidebarCollapsed && (
-              <div className="absolute left-full z-50 ml-3 hidden rounded-md bg-slate-900 px-2.5 py-1 text-xs text-white shadow-lg whitespace-nowrap group-hover:block">
-                Customers
-              </div>
-            )}
-          </button>
+                {/* Tooltip when collapsed */}
+                {isSidebarCollapsed && (
+                  <div className="pointer-events-none absolute left-full z-50 ml-3 hidden rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg group-hover:block">
+                    {item.label}
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* Footer / Logout */}
-        <div className="border-t border-emerald-100 p-3">
+        {/* Logout */}
+        <div className="border-t border-slate-100 p-3">
           <button
             onClick={handleLogout}
             className={`group relative flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 ${
               isSidebarCollapsed ? "justify-center px-0" : ""
             }`}
           >
-            <svg
-              className="h-5 w-5 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
+            <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-
-            {!isSidebarCollapsed && <span>Logout</span>}
+            {!isSidebarCollapsed && <span>Sign out</span>}
 
             {isSidebarCollapsed && (
-              <div className="absolute left-full z-50 ml-3 hidden rounded-md bg-slate-900 px-2.5 py-1 text-xs text-white shadow-lg whitespace-nowrap group-hover:block">
-                Logout
+              <div className="pointer-events-none absolute left-full z-50 ml-3 hidden rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg group-hover:block">
+                Sign out
               </div>
             )}
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex flex-1 flex-col overflow-hidden">
+      {/* ─── Main Content ────────────────────────────────────────────── */}
+      <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="flex h-16 items-center justify-between border-b border-emerald-100 bg-white/80 px-8 backdrop-blur-md">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-6 backdrop-blur-md sm:px-8">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-slate-800 capitalize">
-              {activeTab === "file-transfer"
-                ? "File Transfer Tracking"
-                : activeTab === "proposal"
-                ? "Proposal Management"
-                : activeTab === "quotation"
-                ? "Quotation Management"
-                : "Customer Management"}
-            </h2>
-            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 capitalize">
+            <h1 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
+              {getPageTitle()}
+            </h1>
+            <span className="hidden rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold capitalize text-emerald-700 sm:inline-block">
               {activeTab.replace("-", " ")}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800">
-              US
+            {/* Optional: Notification or search can go here later */}
+            <div className="flex items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-1.5 pr-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                US
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-xs font-semibold text-slate-800">User</p>
+                <p className="text-[11px] text-slate-400">Online</p>
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Dynamic Page Body */}
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="rounded-2xl border border-emerald-100/60 bg-white p-6 shadow-sm">
-            {activeTab === "file-transfer" && <FileTransferTracking />}
-            {activeTab === "proposal" && <Proposal />}
-            {activeTab === "quotation" && <Quotation />}
-            {activeTab === "customer" && <Customer />}
+        {/* Page Body */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-5 sm:p-6 lg:p-8">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/40">
+              <div className="p-5 sm:p-6">
+                {activeTab === "file-transfer" && <FileTransferTracking />}
+                {activeTab === "proposal" && <Proposal />}
+                {activeTab === "quotation" && <Quotation />}
+                {activeTab === "customer" && <Customer />}
+              </div>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

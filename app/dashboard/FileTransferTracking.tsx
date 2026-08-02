@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
-
+import { useMemo, useState } from "react";
 import { useCreateShipment } from "../hooks/useCreateShipment";
 import { useShipmentItems } from "../hooks/useShipmentItems";
 import { useAddShipmentItem } from "../hooks/useAddShipmentItem";
-// Import your hook for fetching all shipments when ready:
 import { useAllShipments } from "../hooks/useAllShipments";
+import { useIncomingShipments } from "../hooks/useIncomingShipments";
 
 import type {
   CreateShipmentRequest,
@@ -14,26 +13,41 @@ import type {
 } from "../lib/types/shipment";
 import { ConfirmShipmentModal } from "./ConfirmShipmentModal";
 
-type ViewMode = "CREATE" | "ADD_ITEMS" | "VIEW_ALL";
+type ViewMode = "CREATE" | "ADD_ITEMS" | "VIEW_ALL" | "INCOMING";
 
 export default function FileTransferTracking() {
-  // Navigation Tab State
   const [activeTab, setActiveTab] = useState<ViewMode>("CREATE");
 
-  // React Query Hooks
+  // Hooks
   const createShipmentMutation = useCreateShipment();
   const addShipmentItemMutation = useAddShipmentItem();
-  const { data: allShipments = [], isLoading: isLoadingAll, refetch: refetchAllShipments } = useAllShipments();
+  const {
+    data: allShipments = [],
+    isLoading: isLoadingAll,
+    refetch: refetchAllShipments,
+  } = useAllShipments();
 
-  // Local State
+  const {
+    data: incomingShipments = [],
+    isLoading: isLoadingIncoming,
+    refetch: refetchIncoming,
+  } = useIncomingShipments();
+
+  // Local state
   const [activeShipmentId, setActiveShipmentId] = useState("");
   const [searchShipmentId, setSearchShipmentId] = useState("");
+  const [selectedShipmentForConfirm, setSelectedShipmentForConfirm] =
+    useState<any | null>(null);
 
-  // Load shipment items for active shipment ID
+  // Incoming filters
+  const [incomingFromBranch, setIncomingFromBranch] = useState("");
+  const [incomingToBranch, setIncomingToBranch] = useState("");
+  const [incomingDate, setIncomingDate] = useState("");
+
+  // Load items for active shipment
   const {
     data: items = [],
     isLoading: isLoadingItems,
-    error: itemsError,
   } = useShipmentItems(activeShipmentId);
 
   // Forms
@@ -54,13 +68,12 @@ export default function FileTransferTracking() {
     remarks: "",
   });
 
-  // Handle Search / Lookup
+  // Handlers
   const handleSearch = () => {
     if (!searchShipmentId.trim()) return;
     setActiveShipmentId(searchShipmentId.trim());
   };
 
-  // Handle Create Shipment
   const handleCreateShipment = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -77,10 +90,8 @@ export default function FileTransferTracking() {
         const shipmentId = String(
           response.id ?? response.shipmentId ?? response
         );
-
         setActiveShipmentId(shipmentId);
         setSearchShipmentId(shipmentId);
-
         setShipmentForm({
           fromBranchId: "",
           toBranchId: "",
@@ -88,17 +99,13 @@ export default function FileTransferTracking() {
           courierReference: "",
           remarks: "",
         });
-
-        // Automatically transition to Add Items mode for the newly created shipment
         setActiveTab("ADD_ITEMS");
       },
     });
   };
 
-  // Handle Add Item
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!activeShipmentId) return;
 
     const item: ShipmentItemRequest = {
@@ -115,10 +122,7 @@ export default function FileTransferTracking() {
     };
 
     addShipmentItemMutation.mutate(
-      {
-        shipmentId: activeShipmentId,
-        itemData: item,
-      },
+      { shipmentId: activeShipmentId, itemData: item },
       {
         onSuccess: () => {
           setItemForm({
@@ -134,90 +138,101 @@ export default function FileTransferTracking() {
     );
   };
 
-  const [selectedShipmentForConfirm, setSelectedShipmentForConfirm] = useState<any | null>(null);
+  // Incoming filtered list
+  const filteredIncoming = useMemo(() => {
+    return (incomingShipments as any[]).filter((s) => {
+      const fromMatch =
+        !incomingFromBranch ||
+        String(s.fromBranch ?? s.fromBranchId ?? "")
+          .toLowerCase()
+          .includes(incomingFromBranch.toLowerCase());
 
-  // 1. Store only the selected ID for confirmation
+      const toMatch =
+        !incomingToBranch ||
+        String(s.toBranch ?? s.toBranchId ?? "")
+          .toLowerCase()
+          .includes(incomingToBranch.toLowerCase());
 
+      const dateMatch =
+        !incomingDate ||
+        (s.sentDate &&
+          String(s.sentDate).slice(0, 10) === incomingDate);
+
+      return fromMatch && toMatch && dateMatch;
+    });
+  }, [incomingShipments, incomingFromBranch, incomingToBranch, incomingDate]);
+
+  const inputClass =
+    "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10";
+
+  const tabs: { id: ViewMode; label: string }[] = [
+    { id: "CREATE", label: "Create Shipment" },
+    { id: "ADD_ITEMS", label: "Add Items" },
+    { id: "VIEW_ALL", label: "All Shipments" },
+    { id: "INCOMING", label: "Incoming Files" },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Navigation Options Header */}
-      <div className="border-b border-gray-200 bg-white p-4 shadow-sm rounded-lg">
-        <h2 className="mb-4 text-xl font-bold text-gray-800">
-          Courier File Transfer Management
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => setActiveTab("CREATE")}
-            className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
-              activeTab === "CREATE"
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            + Create New Courier Shipment
-          </button>
+      {/* ─── Header + Tabs ──────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="mb-5">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900">
+            Courier File Transfer
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Create, track and manage inter-branch document shipments
+          </p>
+        </div>
 
-          <button
-            onClick={() => setActiveTab("ADD_ITEMS")}
-            className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
-              activeTab === "ADD_ITEMS"
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            Add Items to Existing Shipment
-          </button>
-
-          <button
-            onClick={() => setActiveTab("VIEW_ALL")}
-            className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
-              activeTab === "VIEW_ALL"
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            View All Courier Shipments
-          </button>
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                activeTab === tab.id
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Global Alerts */}
       {createShipmentMutation.error && (
-        <div className="rounded border border-red-200 bg-red-100 p-4 text-sm text-red-700">
+        <Alert type="error">
           {(createShipmentMutation.error as Error).message}
-        </div>
+        </Alert>
       )}
-
       {addShipmentItemMutation.error && (
-        <div className="rounded border border-red-200 bg-red-100 p-4 text-sm text-red-700">
+        <Alert type="error">
           {(addShipmentItemMutation.error as Error).message}
-        </div>
+        </Alert>
       )}
-
       {createShipmentMutation.isSuccess && (
-        <div className="rounded border border-emerald-200 bg-emerald-100 p-4 text-sm text-emerald-800">
+        <Alert type="success">
           Shipment created successfully! Switched to items entry mode.
-        </div>
+        </Alert>
       )}
-
       {addShipmentItemMutation.isSuccess && (
-        <div className="rounded border border-emerald-200 bg-emerald-100 p-4 text-sm text-emerald-800">
-          Item added successfully!
-        </div>
+        <Alert type="success">Item added successfully!</Alert>
       )}
 
-      {/* OPTION 1: CREATE NEW SHIPMENT */}
+      {/* ─── CREATE ─────────────────────────────────────────────────── */}
       {activeTab === "CREATE" && (
-        <div className="mx-auto max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-gray-800">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+          <h3 className="mb-5 text-lg font-semibold text-slate-900">
             Create New Courier Shipment
           </h3>
 
           <form onSubmit={handleCreateShipment} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-gray-700">
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
                   From Branch ID *
                 </label>
                 <input
@@ -230,12 +245,11 @@ export default function FileTransferTracking() {
                       fromBranchId: e.target.value,
                     })
                   }
-                  className="mt-1 w-full rounded border p-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  className={inputClass}
                 />
               </div>
-
               <div>
-                <label className="block text-xs font-medium text-gray-700">
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
                   To Branch ID *
                 </label>
                 <input
@@ -248,13 +262,13 @@ export default function FileTransferTracking() {
                       toBranchId: e.target.value,
                     })
                   }
-                  className="mt-1 w-full rounded border p-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  className={inputClass}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 Courier Company *
               </label>
               <input
@@ -267,12 +281,12 @@ export default function FileTransferTracking() {
                     courierCompany: e.target.value,
                   })
                 }
-                className="mt-1 w-full rounded border p-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 Courier Reference / Tracking No *
               </label>
               <input
@@ -285,12 +299,12 @@ export default function FileTransferTracking() {
                     courierReference: e.target.value,
                   })
                 }
-                className="mt-1 w-full rounded border p-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 Remarks
               </label>
               <textarea
@@ -302,71 +316,70 @@ export default function FileTransferTracking() {
                     remarks: e.target.value,
                   })
                 }
-                className="mt-1 w-full rounded border p-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className={inputClass}
               />
             </div>
 
             <button
               type="submit"
               disabled={createShipmentMutation.isPending}
-              className="w-full rounded bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:bg-gray-400"
+              className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700 disabled:opacity-60"
             >
               {createShipmentMutation.isPending
-                ? "Creating..."
+                ? "Creating…"
                 : "Create Shipment & Proceed to Items"}
             </button>
           </form>
         </div>
       )}
 
-      {/* OPTION 2: ADD ITEMS TO EXISTING SHIPMENT */}
+      {/* ─── ADD ITEMS ──────────────────────────────────────────────── */}
       {activeTab === "ADD_ITEMS" && (
         <div className="space-y-6">
-          {/* Lookup Shipment Header */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-3 text-lg font-semibold text-gray-800">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-lg font-semibold text-slate-900">
               Lookup Shipment
             </h3>
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 type="text"
                 placeholder="Enter Shipment ID"
                 value={searchShipmentId}
                 onChange={(e) => setSearchShipmentId(e.target.value)}
-                className="w-64 rounded border p-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className={`${inputClass} sm:max-w-xs`}
               />
               <button
                 onClick={handleSearch}
                 disabled={isLoadingItems}
-                className="rounded bg-slate-800 px-5 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:bg-gray-400"
+                className="rounded-xl bg-slate-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
               >
-                {isLoadingItems ? "Loading..." : "Load Shipment"}
+                {isLoadingItems ? "Loading…" : "Load Shipment"}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            {/* Form: Add Item */}
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Add Item Form */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Add Item Fields
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Add Item
                 </h3>
                 {activeShipmentId ? (
-                  <span className="rounded bg-emerald-100 px-2.5 py-1 font-mono text-xs font-semibold text-emerald-800">
-                    Active ID: {activeShipmentId}
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 font-mono text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                    ID: {activeShipmentId}
                   </span>
                 ) : (
                   <span className="text-xs text-amber-600">
-                    * Please search/load a shipment ID first
+                    Load a shipment first
                   </span>
                 )}
               </div>
 
               <form onSubmit={handleAddItem} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Document Type
                     </label>
                     <select
@@ -377,7 +390,7 @@ export default function FileTransferTracking() {
                           documentType: e.target.value,
                         })
                       }
-                      className="mt-1 w-full rounded border p-2 text-sm"
+                      className={inputClass}
                     >
                       <option value="POLICY">POLICY</option>
                       <option value="CLAIM">CLAIM</option>
@@ -385,9 +398,8 @@ export default function FileTransferTracking() {
                       <option value="OTHER">OTHER</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Document Number *
                     </label>
                     <input
@@ -400,14 +412,14 @@ export default function FileTransferTracking() {
                           documentNumber: e.target.value,
                         })
                       }
-                      className="mt-1 w-full rounded border p-2 text-sm"
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Customer Name *
                     </label>
                     <input
@@ -420,12 +432,11 @@ export default function FileTransferTracking() {
                           customerName: e.target.value,
                         })
                       }
-                      className="mt-1 w-full rounded border p-2 text-sm"
+                      className={inputClass}
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Policy Number *
                     </label>
                     <input
@@ -438,13 +449,13 @@ export default function FileTransferTracking() {
                           policyNumber: e.target.value,
                         })
                       }
-                      className="mt-1 w-full rounded border p-2 text-sm"
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
                     Page Count *
                   </label>
                   <input
@@ -457,12 +468,12 @@ export default function FileTransferTracking() {
                         pageCount: e.target.value,
                       })
                     }
-                    className="mt-1 w-full rounded border p-2 text-sm"
+                    className={inputClass}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
                     Remarks
                   </label>
                   <textarea
@@ -474,7 +485,7 @@ export default function FileTransferTracking() {
                         remarks: e.target.value,
                       })
                     }
-                    className="mt-1 w-full rounded border p-2 text-sm"
+                    className={inputClass}
                   />
                 </div>
 
@@ -483,56 +494,69 @@ export default function FileTransferTracking() {
                   disabled={
                     addShipmentItemMutation.isPending || !activeShipmentId
                   }
-                  className="w-full rounded bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:bg-gray-400"
+                  className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700 disabled:opacity-60"
                 >
                   {addShipmentItemMutation.isPending
-                    ? "Adding..."
+                    ? "Adding…"
                     : "Add Item to Shipment"}
                 </button>
               </form>
             </div>
 
-            {/* Table: Items Added Already */}
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-gray-800">
-                Items Added Already{" "}
-                {activeShipmentId && `(#${activeShipmentId})`}
+            {/* Items Table */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <h3 className="mb-4 text-lg font-semibold text-slate-900">
+                Items in Shipment{" "}
+                {activeShipmentId && (
+                  <span className="text-sm font-normal text-slate-500">
+                    #{activeShipmentId}
+                  </span>
+                )}
               </h3>
 
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-left text-sm text-gray-600">
-                  <thead className="border-b bg-gray-50 text-xs uppercase text-gray-700">
-                    <tr>
-                      <th className="p-2.5">Doc Type</th>
-                      <th className="p-2.5">Doc Number</th>
-                      <th className="p-2.5">Customer Name</th>
-                      <th className="p-2.5">Policy Number</th>
-                      <th className="p-2.5">Pages</th>
-                      <th className="p-2.5">Remarks</th>
+                <table className="min-w-full divide-y divide-slate-100 text-sm">
+                  <thead>
+                    <tr className="bg-slate-50/80">
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Type
+                      </th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Doc No
+                      </th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Customer
+                      </th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Policy
+                      </th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Pages
+                      </th>
                     </tr>
                   </thead>
-
-                  <tbody className="divide-y">
+                  <tbody className="divide-y divide-slate-100">
                     {items?.length ? (
                       items.map((item: any, index: number) => (
-                        <tr key={item.id ?? index}>
-                          <td className="p-2.5 font-medium">{item.documentType}</td>
-                          <td className="p-2.5">{item.documentNumber}</td>
-                          <td className="p-2.5">{item.customerName}</td>
-                          <td className="p-2.5">{item.policyNumber}</td>
-                          <td className="p-2.5">{item.pageCount}</td>
-                          <td className="p-2.5">{item.remarks || "-"}</td>
+                        <tr key={item.id ?? index} className="hover:bg-slate-50/70">
+                          <td className="px-3 py-2.5 font-medium text-slate-800">
+                            {item.documentType}
+                          </td>
+                          <td className="px-3 py-2.5">{item.documentNumber}</td>
+                          <td className="px-3 py-2.5">{item.customerName}</td>
+                          <td className="px-3 py-2.5">{item.policyNumber}</td>
+                          <td className="px-3 py-2.5">{item.pageCount}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
                         <td
-                          colSpan={6}
-                          className="p-4 text-center text-gray-400"
+                          colSpan={5}
+                          className="px-3 py-8 text-center text-slate-400"
                         >
                           {activeShipmentId
-                            ? "No items added to this shipment yet."
-                            : "Load a shipment ID to view added items."}
+                            ? "No items added yet."
+                            : "Load a shipment to view items."}
                         </td>
                       </tr>
                     )}
@@ -544,172 +568,401 @@ export default function FileTransferTracking() {
         </div>
       )}
 
-      {/* OPTION 3: SEE ALL COURIER SHIPMENTS VIEW */}
-{activeTab === "VIEW_ALL" && (
-  <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-    {/* Tab Header with Tab-Specific Button */}
-    <div className="mb-4 flex items-center justify-between">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-800">
-          All Courier Shipments
-        </h3>
-        <p className="text-xs text-gray-500">
-          Manage and confirm dispatch status for outward shipments.
-        </p>
-      </div>
-
-      {/* Button visible ONLY on View All tab */}
-      <button
-        onClick={() => refetchAllShipments && refetchAllShipments()}
-        className="flex items-center gap-2 rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-slate-700"
-      >
-        <svg
-          className="h-3.5 w-3.5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-        Refresh History
-      </button>
-    </div>
-
-    {/* Table */}
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-left text-sm text-gray-600">
-        <thead className="border-b bg-gray-50 text-xs uppercase text-gray-700">
-          <tr>
-            <th className="p-3">Shipment ID</th>
-            <th className="p-3">From Branch</th>
-            <th className="p-3">To Branch</th>
-            <th className="p-3">Courier Company</th>
-            <th className="p-3">Courier Ref</th>
-            <th className="p-3">Status</th>
-            <th className="p-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y">
-  {isLoadingAll ? (
-    <tr>
-      <td colSpan={7} className="p-4 text-center text-gray-400">
-        Loading shipments history...
-      </td>
-    </tr>
-  ) : allShipments?.length ? (
-    allShipments.map((shipment: any, index: number) => {
-      const id = String(shipment.id ?? shipment.shipmentId ?? index);
-
-      // Normalize status string from API response (case-insensitive)
-      const status = String(shipment.status || "").toUpperCase();
-
-      const isDispatched =
-        status === "DISPATCHED" ||
-        status === "DISPATCH" ||
-        status === "SENT";
-
-      const isPending =
-        status === "PENDING_DELIVERY" || status === "PENDING";
-
-      return (
-        <tr key={`${id}-${index}`} className="hover:bg-slate-50/50">
-          <td className="p-3 font-semibold text-slate-800">#{id}</td>
-          <td className="p-3">
-            {shipment.fromBranchName ?? `Branch ${shipment.fromBranchId}`}
-          </td>
-          <td className="p-3">
-            {shipment.toBranchName ?? `Branch ${shipment.toBranchId}`}
-          </td>
-          <td className="p-3">{shipment.courierCompany}</td>
-          <td className="p-3 font-mono text-xs text-gray-500">
-            {shipment.courierReference}
-          </td>
-
-          {/* STATUS COLUMN */}
-          <td className="p-3">
-            {isDispatched ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-                Dispatched
-              </span>
-            ) : isPending ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                Pending Delivery
-              </span>
-            ) : (
-              <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                Draft
-              </span>
-            )}
-          </td>
-
-          {/* ACTIONS COLUMN */}
-          <td className="p-3 text-right">
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setActiveShipmentId(id);
-                  setSearchShipmentId(id);
-                  setActiveTab("ADD_ITEMS");
-                }}
-                className="rounded border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
-              >
-                Edit
-              </button>
-
-              {isDispatched ? (
-                <button
-                  disabled
-                  className="cursor-not-allowed rounded bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 opacity-80"
-                >
-                  Dispatched
-                </button>
-              ) : isPending ? (
-                <button
-                  disabled
-                  className="cursor-not-allowed rounded bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-600 opacity-80"
-                >
-                  Pending
-                </button>
-              ) : (
-                <button
-                  onClick={() => setSelectedShipmentForConfirm(shipment)}
-                  className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-indigo-700 transition"
-                >
-                  Confirm Shipment
-                </button>
-              )}
+      {/* ─── VIEW ALL ───────────────────────────────────────────────── */}
+      {activeTab === "VIEW_ALL" && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">
+                All Courier Shipments
+              </h3>
+              <p className="text-sm text-slate-500">
+                Manage and confirm dispatch status for outward shipments
+              </p>
             </div>
-          </td>
-        </tr>
-      );
-    })
-  ) : (
-    <tr>
-      <td colSpan={7} className="p-4 text-center text-gray-400">
-        No courier shipments found.
-      </td>
-    </tr>
-  )}
-</tbody>
-      </table>
-    </div>
-  </div>
-)}
+            <button
+              onClick={() => refetchAllShipments?.()}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
 
-{/* MODAL CALL */}
-{selectedShipmentForConfirm && (
-  <ConfirmShipmentModal
-    shipment={selectedShipmentForConfirm}
-    onClose={() => setSelectedShipmentForConfirm(null)}
-  />
-)}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead>
+                <tr className="bg-slate-50/80">
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    ID
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    From
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    To
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Courier
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Ref
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Status
+                  </th>
+                  <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {isLoadingAll ? (
+                  <tr>
+                    <td colSpan={7} className="py-16 text-center text-slate-400">
+                      Loading shipments…
+                    </td>
+                  </tr>
+                ) : allShipments?.length ? (
+                  allShipments.map((shipment: any, index: number) => {
+                    const id = String(
+                      shipment.id ?? shipment.shipmentId ?? index
+                    );
+                    const status = String(shipment.status || "").toUpperCase();
+                    const isDispatched =
+                      status === "DISPATCHED" ||
+                      status === "DISPATCH" ||
+                      status === "SENT";
+                    const isPending =
+                      status === "PENDING_DELIVERY" || status === "PENDING";
+
+                    return (
+                      <tr key={`${id}-${index}`} className="hover:bg-slate-50/70">
+                        <td className="px-5 py-3.5 font-semibold text-slate-900">
+                          #{id}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm">
+                          {shipment.fromBranchName ??
+                            `Branch ${shipment.fromBranchId}`}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm">
+                          {shipment.toBranchName ??
+                            `Branch ${shipment.toBranchId}`}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm">
+                          {shipment.courierCompany}
+                        </td>
+                        <td className="px-5 py-3.5 font-mono text-xs text-slate-500">
+                          {shipment.courierReference}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {isDispatched ? (
+                            <StatusBadge color="blue">Dispatched</StatusBadge>
+                          ) : isPending ? (
+                            <StatusBadge color="amber">
+                              Pending Delivery
+                            </StatusBadge>
+                          ) : (
+                            <StatusBadge color="slate">Draft</StatusBadge>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setActiveShipmentId(id);
+                                setSearchShipmentId(id);
+                                setActiveTab("ADD_ITEMS");
+                              }}
+                              className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                              Edit
+                            </button>
+                            {isDispatched ? (
+                              <button
+                                disabled
+                                className="cursor-not-allowed rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-600 opacity-70"
+                              >
+                                Dispatched
+                              </button>
+                            ) : isPending ? (
+                              <button
+                                disabled
+                                className="cursor-not-allowed rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-600 opacity-70"
+                              >
+                                Pending
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  setSelectedShipmentForConfirm(shipment)
+                                }
+                                className="rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                              >
+                                Confirm
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-16 text-center text-slate-400">
+                      No courier shipments found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ─── INCOMING FILES (NEW) ───────────────────────────────────── */}
+      {activeTab === "INCOMING" && (
+        <div className="space-y-5">
+          {/* Filters */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Incoming Files
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Shipments arriving at your branch
+                </p>
+              </div>
+              <button
+                onClick={() => refetchIncoming?.()}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                  From Branch
+                </label>
+                <input
+                  type="text"
+                  placeholder="Filter by from branch…"
+                  value={incomingFromBranch}
+                  onChange={(e) => setIncomingFromBranch(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                  To Branch
+                </label>
+                <input
+                  type="text"
+                  placeholder="Filter by to branch…"
+                  value={incomingToBranch}
+                  onChange={(e) => setIncomingToBranch(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                  Sent Date
+                </label>
+                <input
+                  type="date"
+                  value={incomingDate}
+                  onChange={(e) => setIncomingDate(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Incoming Table */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-100">
+                <thead>
+                  <tr className="bg-slate-50/80">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Tracking
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      From
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      To
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Sent By
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Sent Date
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Courier
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {isLoadingIncoming ? (
+                    <tr>
+                      <td colSpan={7} className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-emerald-600 border-t-transparent" />
+                          <p className="text-sm text-slate-500">
+                            Loading incoming shipments…
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : filteredIncoming.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-16 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                            <svg
+                              className="h-7 w-7 text-slate-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                              />
+                            </svg>
+                          </div>
+                          <h3 className="text-base font-semibold text-slate-800">
+                            No incoming shipments
+                          </h3>
+                          <p className="mt-1.5 text-sm text-slate-500">
+                            {incomingFromBranch ||
+                            incomingToBranch ||
+                            incomingDate
+                              ? "Try adjusting your filters."
+                              : "There are currently no incoming files."}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredIncoming.map((s: any, index: number) => (
+                      <tr
+                        key={s.id ?? s.trackingNumber ?? index}
+                        className="hover:bg-slate-50/70"
+                      >
+                        <td className="px-5 py-3.5 font-semibold text-slate-900">
+                          {s.trackingNumber ?? s.courierReference ?? `#${s.id}`}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm">
+                          {s.fromBranch ?? s.fromBranchName ?? "—"}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm">
+                          {s.toBranch ?? s.toBranchName ?? "—"}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm">
+                          {s.sentBy ?? "—"}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-slate-600">
+                          {s.sentDate
+                            ? new Date(s.sentDate).toLocaleDateString()
+                            : "—"}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm">
+                          {s.courierCompany ?? "—"}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <StatusBadge
+                            color={
+                              String(s.status || "")
+                                .toUpperCase()
+                                .includes("DISPATCH")
+                                ? "blue"
+                                : String(s.status || "")
+                                    .toUpperCase()
+                                    .includes("PENDING")
+                                ? "amber"
+                                : "slate"
+                            }
+                          >
+                            {s.status ?? "Unknown"}
+                          </StatusBadge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {selectedShipmentForConfirm && (
+        <ConfirmShipmentModal
+          shipment={selectedShipmentForConfirm}
+          onClose={() => setSelectedShipmentForConfirm(null)}
+        />
+      )}
     </div>
+  );
+}
+
+/* ─── Helpers ──────────────────────────────────────────────────────── */
+
+function Alert({
+  type,
+  children,
+}: {
+  type: "error" | "success";
+  children: React.ReactNode;
+}) {
+  const styles =
+    type === "error"
+      ? "border-rose-200 bg-rose-50 text-rose-700"
+      : "border-emerald-200 bg-emerald-50 text-emerald-800";
+
+  return (
+    <div className={`rounded-xl border px-4 py-3 text-sm ${styles}`}>
+      {children}
+    </div>
+  );
+}
+
+function StatusBadge({
+  color,
+  children,
+}: {
+  color: "blue" | "amber" | "slate" | "emerald";
+  children: React.ReactNode;
+}) {
+  const map = {
+    blue: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+    amber: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+    slate: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
+    emerald: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${map[color]}`}
+    >
+      {children}
+    </span>
   );
 }
