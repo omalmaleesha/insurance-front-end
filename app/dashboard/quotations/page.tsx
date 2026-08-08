@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 // lightweight fallback for react-hot-toast
 const toast = {
@@ -30,7 +31,7 @@ import {
   QuotationStatus,
   QuotationType,
   CurrencyType,
-} from "../lib/types/quatation";
+} from "../../lib/types/quatation";
 
 export default function QuotationComponent() {
   const { data, isLoading } = useQuotations();
@@ -400,9 +401,12 @@ export default function QuotationComponent() {
                     </td>
                     <td className="whitespace-nowrap px-5 py-4">
                       <div className="flex flex-wrap items-center justify-end gap-1.5">
-                        <ActionBtn onClick={() => handleView(quotation)} variant="ghost">
+                        <Link
+                          href={`/dashboard/quotations/${quotation.id}`}
+                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                        >
                           View
-                        </ActionBtn>
+                        </Link>
                         <ActionBtn
                           onClick={() => handleCalculate(quotation.id)}
                           disabled={actionLoadingId === quotation.id}

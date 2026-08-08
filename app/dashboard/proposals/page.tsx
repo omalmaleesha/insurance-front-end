@@ -8,9 +8,11 @@ import {
   useSendProposal,
   useResendProposal,
   useProposal, // <--- Import useProposal
-} from "../hooks/useProposal";
-import type { Proposal } from "../lib/types/proposal";
+} from "../../hooks/useProposal";
+import type { Proposal } from "../../lib/types/proposal";
 
+import Link from "next/link";
+import { Eye } from "lucide-react"; 
 export default function ProposalComponent() {
   /* -----------------------------
       Queries
@@ -206,12 +208,13 @@ export default function ProposalComponent() {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
                       {/* FIXED VIEW BUTTON */}
-                      <button
-                        onClick={() => setSelectedId(proposal.id)}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                      <Link
+                        href={`/dashboard/proposals/${proposal.id}`}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
                       >
+                        <Eye className="h-3.5 w-3.5" />
                         View
-                      </button>
+                      </Link>
 
                       <button
                         disabled={proposal.status !== "DRAFT" || processingId === proposal.id}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import Link from "next/link";
 import {
   useCustomers,
   useCreatePersonalCustomer,
@@ -21,7 +22,7 @@ import {
   PersonalCustomerUpdateRequest,
   CorporateCustomerUpdateRequest,
   Status,
-} from "../lib/types/customer";
+} from "../../lib/types/customer";
 import {
   Search,
   Plus,
@@ -32,6 +33,7 @@ import {
   X,
   Loader2,
   AlertTriangle,
+  Eye,
 } from "lucide-react";
 
 // Type guard
@@ -460,7 +462,17 @@ export default function Customer() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* View Button */}
+                          <Link
+                            href={`/dashboard/customer/${cust.id}`}
+                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            View
+                          </Link>
+
+                          {/* Edit Button */}
                           <button
                             onClick={() => handleOpenEditModal(cust)}
                             className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50"
@@ -468,6 +480,8 @@ export default function Customer() {
                             <Pencil className="h-3.5 w-3.5" />
                             Edit
                           </button>
+
+                          {/* Delete Button */}
                           <button
                             onClick={() => handleDelete(cust.id)}
                             disabled={deleteCustomerMutation.isPending}

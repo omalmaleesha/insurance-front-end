@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getShipmentHistory } from "../../services/fileTransfer.service";
-import { ShipmentResponse } from "../../lib/types/shipment";
+import { getShipmentHistory } from "../../../services/fileTransfer.service";
+import { ShipmentResponse } from "../../../lib/types/shipment";
 
 export function useAllShipments() {
   return useQuery<ShipmentResponse[]>({
