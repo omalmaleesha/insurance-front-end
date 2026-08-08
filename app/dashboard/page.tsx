@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "../lib/tanstack/auth";
-import FileTransferTracking from "./FileTransferTracking";
+import FileTransferTracking from "../file-transfer/page";
 import Proposal from "../dashboard/Proposal";
-import Quotation from "./Quotation";
-import Customer from "./customer";
+import Quotation from "../quotations/page";
+import Customer from "../customer/page";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -16,11 +16,14 @@ export default function DashboardPage() {
     "file-transfer" | "proposal" | "quotation" | "customer"
   >("file-transfer");
 
+
   useEffect(() => {
     if (!auth.isAuthenticated()) {
       router.replace("/login");
     }
   }, [router]);
+
+  
 
   const handleLogout = () => {
     auth.removeToken();
@@ -80,6 +83,7 @@ export default function DashboardPage() {
         return "Dashboard";
     }
   };
+
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-800">

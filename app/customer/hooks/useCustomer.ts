@@ -19,7 +19,7 @@ import {
   searchCustomers,
   updateCorporateCustomer,
   updatePersonalCustomer,
-} from "../services/customer.service";
+} from "../../services/customer.service";
 import {
   CorporateCustomerCreateRequest,
   CorporateCustomerUpdateRequest,
@@ -27,7 +27,7 @@ import {
   PersonalCustomerCreateRequest,
   PersonalCustomerUpdateRequest,
   Status,
-} from "../lib/types/customer";
+} from "../../lib/types/customer";
 
 // =======================================
 // QUERY KEYS

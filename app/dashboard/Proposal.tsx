@@ -1,16 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import CreateProposalModal from "./CreateProposalModal";
+import CreateProposalModal from "./components/CreateProposalModal";
 import {
   useCreateProposal,
   useProposals,
   useSendProposal,
   useResendProposal,
+  useProposal, // <--- Import useProposal
 } from "../hooks/useProposal";
 import type { Proposal } from "../lib/types/proposal";
 
-export default function Proposal() {
+export default function ProposalComponent() {
   /* -----------------------------
       Queries
   ------------------------------*/
@@ -22,6 +23,9 @@ export default function Proposal() {
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // State for View Details Modal
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   /* -----------------------------
       Handlers
@@ -122,9 +126,7 @@ export default function Proposal() {
     return (
       <div className="flex h-80 flex-col items-center justify-center gap-4">
         <div className="h-11 w-11 animate-spin rounded-full border-[3px] border-emerald-600 border-t-transparent" />
-        <p className="text-sm font-medium text-slate-500">
-          Loading proposals…
-        </p>
+        <p className="text-sm font-medium text-slate-500">Loading proposals…</p>
       </div>
     );
   }
@@ -135,21 +137,6 @@ export default function Proposal() {
   if (isError) {
     return (
       <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100">
-          <svg
-            className="h-6 w-6 text-rose-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-        </div>
         <h2 className="text-lg font-semibold text-rose-800">
           Unable to load proposals
         </h2>
@@ -162,247 +149,107 @@ export default function Proposal() {
 
   return (
     <div className="space-y-6">
-      {/* ─── Summary Cards ─────────────────────────────────────────── */}
+      {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <SummaryCard
-          title="Total Proposals"
-          value={total}
-          accent="emerald"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
-            </svg>
-          }
-        />
-        <SummaryCard
-          title="Draft"
-          value={draft}
-          accent="slate"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          }
-        />
-        <SummaryCard
-          title="Email Sent"
-          value={emailSent}
-          accent="blue"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          }
-        />
-        <SummaryCard
-          title="Opened"
-          value={opened}
-          accent="amber"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-          }
-        />
-        <SummaryCard
-          title="Submitted"
-          value={submitted}
-          accent="emerald"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-        />
+        <SummaryCard title="Total Proposals" value={total} accent="emerald" />
+        <SummaryCard title="Draft" value={draft} accent="slate" />
+        <SummaryCard title="Email Sent" value={emailSent} accent="blue" />
+        <SummaryCard title="Opened" value={opened} accent="amber" />
+        <SummaryCard title="Submitted" value={submitted} accent="emerald" />
       </div>
 
-      {/* ─── Toolbar ───────────────────────────────────────────────── */}
+      {/* Toolbar */}
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div className="relative flex-1">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, email, product or proposal no…"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
-          />
-        </div>
-
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, email, product or proposal no…"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+        />
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700 active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
           Create Proposal
         </button>
       </div>
 
-      {/* ─── Table ─────────────────────────────────────────────────── */}
+      {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-100">
             <thead>
               <tr className="bg-slate-50/80">
-                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Proposal No
-                </th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Customer
-                </th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Phone
-                </th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Product
-                </th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Status
-                </th>
-                <th className="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Actions
-                </th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Proposal No</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Customer</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Phone</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Product</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Status</th>
+                <th className="px-6 py-3.5 text-center text-xs font-semibold uppercase text-slate-500">Actions</th>
               </tr>
             </thead>
-
             <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center">
-                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-                        <svg
-                          className="h-7 w-7 text-slate-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 12h6m-6 4h6M8 4h8a2 2 0 012 2v12a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2z"
-                          />
-                        </svg>
-                      </div>
-                      <h3 className="text-base font-semibold text-slate-800">
-                        No proposals found
-                      </h3>
-                      <p className="mt-1.5 text-sm text-slate-500">
-                        {search
-                          ? "Try adjusting your search terms."
-                          : "Create your first proposal to get started."}
-                      </p>
-                      {!search && (
-                        <button
-                          onClick={() => setShowCreateModal(true)}
-                          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                        >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                          </svg>
-                          Create Proposal
-                        </button>
-                      )}
+              {filtered.map((proposal) => (
+                <tr key={proposal.id} className="transition-colors hover:bg-slate-50/70">
+                  <td className="whitespace-nowrap px-6 py-4 font-semibold text-slate-900">{proposal.proposalNumber}</td>
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-slate-900">{proposal.customerName}</div>
+                    <div className="text-sm text-slate-500">{proposal.customerEmail}</div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">{proposal.customerPhone}</td>
+                  <td className="px-6 py-4 text-sm text-slate-700">{proposal.productName}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${badge(proposal.status)}`}>
+                      {proposal.status.replace("_", " ")}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      {/* FIXED VIEW BUTTON */}
+                      <button
+                        onClick={() => setSelectedId(proposal.id)}
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                      >
+                        View
+                      </button>
+
+                      <button
+                        disabled={proposal.status !== "DRAFT" || processingId === proposal.id}
+                        onClick={() => handleSendProposal(proposal.id)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium text-white transition ${
+                          proposal.status === "DRAFT" ? "bg-emerald-600 hover:bg-emerald-700" : "cursor-not-allowed bg-slate-200 text-slate-400"
+                        }`}
+                      >
+                        {processingId === proposal.id && sendProposal.isPending ? "Sending…" : "Send"}
+                      </button>
+
+                      <button
+                        disabled={proposal.status === "DRAFT" || proposal.status === "SUBMITTED" || processingId === proposal.id}
+                        onClick={() => handleResendProposal(proposal.id)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium text-white transition ${
+                          proposal.status === "EMAIL_SENT" || proposal.status === "OPENED"
+                            ? "bg-blue-600 hover:bg-blue-700"
+                            : "cursor-not-allowed bg-slate-200 text-slate-400"
+                        }`}
+                      >
+                        {processingId === proposal.id && resendProposal.isPending ? "Resending…" : "Resend"}
+                      </button>
                     </div>
                   </td>
                 </tr>
-              ) : (
-                filtered.map((proposal) => (
-                  <tr
-                    key={proposal.id}
-                    className="transition-colors hover:bg-slate-50/70"
-                  >
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <span className="font-semibold text-slate-900">
-                        {proposal.proposalNumber}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">
-                        {proposal.customerName}
-                      </div>
-                      <div className="mt-0.5 text-sm text-slate-500">
-                        {proposal.customerEmail}
-                      </div>
-                    </td>
-
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">
-                      {proposal.customerPhone}
-                    </td>
-
-                    <td className="px-6 py-4 text-sm text-slate-700">
-                      {proposal.productName}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${badge(
-                          proposal.status
-                        )}`}
-                      >
-                        {proposal.status.replace("_", " ")}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50">
-                          View
-                        </button>
-
-                        <button
-                          disabled={
-                            proposal.status !== "DRAFT" ||
-                            processingId === proposal.id
-                          }
-                          onClick={() => handleSendProposal(proposal.id)}
-                          className={`rounded-lg px-3 py-1.5 text-xs font-medium text-white transition ${
-                            proposal.status === "DRAFT"
-                              ? "bg-emerald-600 hover:bg-emerald-700"
-                              : "cursor-not-allowed bg-slate-200 text-slate-400"
-                          }`}
-                        >
-                          {processingId === proposal.id && sendProposal.isPending
-                            ? "Sending…"
-                            : "Send"}
-                        </button>
-
-                        <button
-                          disabled={
-                            proposal.status === "DRAFT" ||
-                            proposal.status === "SUBMITTED" ||
-                            processingId === proposal.id
-                          }
-                          onClick={() => handleResendProposal(proposal.id)}
-                          className={`rounded-lg px-3 py-1.5 text-xs font-medium text-white transition ${
-                            proposal.status === "EMAIL_SENT" ||
-                            proposal.status === "OPENED"
-                              ? "bg-blue-600 hover:bg-blue-700"
-                              : "cursor-not-allowed bg-slate-200 text-slate-400"
-                          }`}
-                        >
-                          {processingId === proposal.id &&
-                          resendProposal.isPending
-                            ? "Resending…"
-                            : "Resend"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* View Details Modal Component */}
+      {selectedId && (
+        <ProposalViewModal
+          id={selectedId}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
 
       {/* Create Modal */}
       <CreateProposalModal
@@ -415,40 +262,103 @@ export default function Proposal() {
   );
 }
 
-/* ─── Summary Card ─────────────────────────────────────────────────── */
+/* ─── Proposal Details Modal ───────────────────────────────────────── */
+function ProposalViewModal({ id, onClose }: { id: number; onClose: () => void }) {
+  // Uses the useProposal hook with the selected ID
+  const { data: proposal, isLoading, isError } = useProposal(id);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between border-b pb-4">
+          <h3 className="text-lg font-bold text-slate-900">
+            Proposal Details #{proposal?.proposalNumber || id}
+          </h3>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          >
+            ✕
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            Loading details...
+          </div>
+        ) : isError || !proposal ? (
+          <div className="py-12 text-center text-sm text-rose-500">
+            Failed to load details.
+          </div>
+        ) : (
+          <div className="mt-4 space-y-4 text-sm text-slate-700">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-slate-400">Customer Name</p>
+                <p className="font-semibold">{proposal.customerName}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Email</p>
+                <p className="font-semibold">{proposal.customerEmail}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Phone</p>
+                <p className="font-semibold">{proposal.customerPhone}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Product</p>
+                <p className="font-semibold">{proposal.productName}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Status</p>
+                <p className="font-semibold">{proposal.status}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Address</p>
+                <p className="font-semibold">{proposal.address || "N/A"}</p>
+              </div>
+            </div>
+
+            {proposal.signatureBase64 && (
+              <div className="border-t pt-3">
+                <p className="text-xs text-slate-400 mb-2">Signature</p>
+                <img
+                  src={proposal.signatureBase64}
+                  alt="Customer Signature"
+                  className="max-h-24 rounded border p-2"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Summary Card Component ───────────────────────────────────────── */
 function SummaryCard({
   title,
   value,
   accent = "emerald",
-  icon,
 }: {
   title: string;
   value: number;
   accent?: "emerald" | "slate" | "blue" | "amber";
-  icon: React.ReactNode;
 }) {
-  const accentStyles = {
-    emerald: "bg-emerald-50 text-emerald-600",
-    slate: "bg-slate-100 text-slate-600",
-    blue: "bg-blue-50 text-blue-600",
-    amber: "bg-amber-50 text-amber-600",
-  };
-
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-            {value}
-          </p>
-        </div>
-        <div
-          className={`flex h-10 w-10 items-center justify-center rounded-xl ${accentStyles[accent]}`}
-        >
-          {icon}
-        </div>
-      </div>
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+      <p className="text-sm font-medium text-slate-500">{title}</p>
+      <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{value}</p>
     </div>
   );
 }

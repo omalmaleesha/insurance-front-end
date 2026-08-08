@@ -22,7 +22,7 @@ import {
   useDuplicateQuotation,
   useDownloadQuotationPdf,
   useQuotation,
-} from "../hooks/useQuotation";
+} from "../quotations/hooks/useQuotation";
 
 import {
   CreateQuotationRequest,

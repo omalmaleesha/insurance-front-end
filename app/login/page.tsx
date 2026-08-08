@@ -25,7 +25,7 @@ export default function LoginPage() {
 
   const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
-  }, []);
+  }, []); // empty array = run only on mount
 
   const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);

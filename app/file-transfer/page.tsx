@@ -1,17 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useCreateShipment } from "../hooks/useCreateShipment";
-import { useShipmentItems } from "../hooks/useShipmentItems";
-import { useAddShipmentItem } from "../hooks/useAddShipmentItem";
-import { useAllShipments } from "../hooks/useAllShipments";
-import { useIncomingShipments } from "../hooks/useIncomingShipments";
+import { useCreateShipment } from "./hooks/useCreateShipment";
+import { useShipmentItems } from "../file-transfer/hooks/useShipmentItems";
+import { useAddShipmentItem } from "../file-transfer/hooks/useAddShipmentItem";
+import { useAllShipments } from "../file-transfer/hooks/useAllShipments";
+import { useIncomingShipments } from "../file-transfer/hooks/useIncomingShipments";
 
 import type {
   CreateShipmentRequest,
   ShipmentItemRequest,
 } from "../lib/types/shipment";
-import { ConfirmShipmentModal } from "./ConfirmShipmentModal";
+import { ConfirmShipmentModal } from "./components/ConfirmShipmentModal";
 
 type ViewMode = "CREATE" | "ADD_ITEMS" | "VIEW_ALL" | "INCOMING";
 

@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { createShipment } from "../services/fileTransfer.service";
+import { createShipment } from "../../services/fileTransfer.service";
 
 export function useCreateShipment() {
   const queryClient = useQueryClient();

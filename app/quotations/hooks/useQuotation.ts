@@ -6,11 +6,11 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import { quotationService } from "../services/quatation.service";
+import { quotationService } from "../../services/quatation.service";
 
 import {
   CreateQuotationRequest,
-} from "../lib/types/quatation";
+} from "../../lib/types/quatation";
 
 const QUERY_KEY = ["quotations"];
 

@@ -9,7 +9,7 @@ import {
   useUpdateCorporateCustomer,
   useDeleteCustomer,
   useSearchCustomers,
-} from "../hooks/useCustomer";
+} from "./hooks/useCustomer";
 import {
   type Customer,
   CustomerType,

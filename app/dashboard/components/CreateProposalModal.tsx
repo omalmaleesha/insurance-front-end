@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuotation } from "../../quotations/hooks/useQuotation"; // Update path if needed
 
 export interface CreateProposalForm {
+  quotationId?: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -16,7 +18,16 @@ interface Props {
   onSubmit: (data: CreateProposalForm) => void;
 }
 
+const DEFAULT_PRODUCTS = [
+  "Motor Insurance",
+  "Life Insurance",
+  "Medical Insurance",
+  "Travel Insurance",
+  "Home Insurance",
+];
+
 const initialForm: CreateProposalForm = {
+  quotationId: "",
   customerName: "",
   customerEmail: "",
   customerPhone: "",
@@ -29,21 +40,63 @@ export default function CreateProposalModal({
   onClose,
   onSubmit,
 }: Props) {
-  const [form, setForm] =
-    useState<CreateProposalForm>(initialForm);
+  const [form, setForm] = useState<CreateProposalForm>(initialForm);
+  const [quotationInput, setQuotationInput] = useState<string>("");
+  const [quotationIdToFetch, setQuotationIdToFetch] = useState<number | null>(null);
+  const [errors, setErrors] = useState<Partial<CreateProposalForm>>({});
+  const [productOptions, setProductOptions] = useState<string[]>(DEFAULT_PRODUCTS);
 
-  const [errors, setErrors] = useState<
-    Partial<CreateProposalForm>
-  >({});
+  // Query hook to fetch quotation data
+  const {
+    data: quotationData,
+    isLoading: isFetchingQuotation,
+    isError: isQuotationError,
+  } = useQuotation(quotationIdToFetch ?? 0);
 
+  // Auto-populate customerName and productName when quotation data is fetched
+  useEffect(() => {
+    if (quotationData) {
+      const fetchedProduct = quotationData.quotationType || "";
+
+      // Ensure the fetched product is available inside the select options list
+      if (fetchedProduct && !productOptions.includes(fetchedProduct)) {
+        setProductOptions((prev) => [...prev, fetchedProduct]);
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        quotationId: quotationInput,
+        customerName: quotationData.customerName || prev.customerName,
+        productName: fetchedProduct || prev.productName,
+      }));
+
+      // Clear validation errors for auto-filled fields
+      setErrors((prev) => ({
+        ...prev,
+        customerName: "",
+        productName: "",
+      }));
+    }
+  }, [quotationData]);
+
+  // Reset form state when modal opens/closes
   useEffect(() => {
     if (open) {
       setForm(initialForm);
+      setQuotationInput("");
+      setQuotationIdToFetch(null);
+      setProductOptions(DEFAULT_PRODUCTS);
       setErrors({});
     }
   }, [open]);
 
   if (!open) return null;
+
+  const handleFetchQuotation = () => {
+    const idNum = Number(quotationInput);
+    if (!quotationInput.trim() || isNaN(idNum)) return;
+    setQuotationIdToFetch(idNum);
+  };
 
   const validate = () => {
     const newErrors: Partial<CreateProposalForm> = {};
@@ -54,9 +107,7 @@ export default function CreateProposalModal({
 
     if (!form.customerEmail.trim()) {
       newErrors.customerEmail = "Email is required";
-    } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customerEmail)
-    ) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customerEmail)) {
       newErrors.customerEmail = "Invalid email";
     }
 
@@ -82,9 +133,7 @@ export default function CreateProposalModal({
   };
 
   const change = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setForm((prev) => ({
       ...prev,
@@ -101,23 +150,14 @@ export default function CreateProposalModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-
       <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl">
-
         {/* Header */}
-
         <div className="flex items-center justify-between border-b p-6">
-
           <div>
-
-            <h2 className="text-xl font-bold">
-              Create Proposal
-            </h2>
-
+            <h2 className="text-xl font-bold">Create Proposal</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Fill customer information.
+              Fetch via Quotation ID or fill customer information manually.
             </p>
-
           </div>
 
           <button
@@ -127,24 +167,53 @@ export default function CreateProposalModal({
           >
             ✕
           </button>
-
         </div>
 
         {/* Form */}
-
-        <form
-          onSubmit={submit}
-          className="space-y-5 p-6"
-        >
-
-          {/* Customer */}
-
+        <form onSubmit={submit} className="space-y-5 p-6">
+          {/* Quotation ID Lookup */}
           <div>
+            <label className="mb-2 block font-medium">Quotation ID</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                disabled={loading || isFetchingQuotation}
+                placeholder="Enter Quotation ID"
+                value={quotationInput}
+                onChange={(e) => setQuotationInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleFetchQuotation();
+                  }
+                }}
+                className="w-full rounded-xl border px-4 py-3 disabled:bg-slate-100"
+              />
+              <button
+                type="button"
+                disabled={
+                  loading || isFetchingQuotation || !quotationInput.trim()
+                }
+                onClick={handleFetchQuotation}
+                className="flex items-center gap-2 rounded-xl bg-slate-800 px-5 py-3 font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+              >
+                {isFetchingQuotation ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  "Fetch"
+                )}
+              </button>
+            </div>
+            {isQuotationError && (
+              <p className="mt-1 text-sm text-red-600">
+                Failed to fetch quotation details. Please check the ID.
+              </p>
+            )}
+          </div>
 
-            <label className="mb-2 block font-medium">
-              Customer Name
-            </label>
-
+          {/* Customer Name */}
+          <div>
+            <label className="mb-2 block font-medium">Customer Name</label>
             <input
               disabled={loading}
               name="customerName"
@@ -152,23 +221,16 @@ export default function CreateProposalModal({
               onChange={change}
               className="w-full rounded-xl border px-4 py-3 disabled:bg-slate-100"
             />
-
             {errors.customerName && (
               <p className="mt-1 text-sm text-red-600">
                 {errors.customerName}
               </p>
             )}
-
           </div>
 
           {/* Email */}
-
           <div>
-
-            <label className="mb-2 block font-medium">
-              Customer Email
-            </label>
-
+            <label className="mb-2 block font-medium">Customer Email</label>
             <input
               disabled={loading}
               type="email"
@@ -177,23 +239,16 @@ export default function CreateProposalModal({
               onChange={change}
               className="w-full rounded-xl border px-4 py-3 disabled:bg-slate-100"
             />
-
             {errors.customerEmail && (
               <p className="mt-1 text-sm text-red-600">
                 {errors.customerEmail}
               </p>
             )}
-
           </div>
 
           {/* Phone */}
-
           <div>
-
-            <label className="mb-2 block font-medium">
-              Customer Phone
-            </label>
-
+            <label className="mb-2 block font-medium">Customer Phone</label>
             <input
               disabled={loading}
               name="customerPhone"
@@ -201,23 +256,16 @@ export default function CreateProposalModal({
               onChange={change}
               className="w-full rounded-xl border px-4 py-3 disabled:bg-slate-100"
             />
-
             {errors.customerPhone && (
               <p className="mt-1 text-sm text-red-600">
                 {errors.customerPhone}
               </p>
             )}
-
           </div>
 
-          {/* Product */}
-
+          {/* Product Select */}
           <div>
-
-            <label className="mb-2 block font-medium">
-              Product
-            </label>
-
+            <label className="mb-2 block font-medium">Product</label>
             <select
               disabled={loading}
               name="productName"
@@ -225,44 +273,22 @@ export default function CreateProposalModal({
               onChange={change}
               className="w-full rounded-xl border px-4 py-3 disabled:bg-slate-100"
             >
-              <option value="">
-                Select Product
-              </option>
-
-              <option value="Motor Insurance">
-                Motor Insurance
-              </option>
-
-              <option value="Life Insurance">
-                Life Insurance
-              </option>
-
-              <option value="Medical Insurance">
-                Medical Insurance
-              </option>
-
-              <option value="Travel Insurance">
-                Travel Insurance
-              </option>
-
-              <option value="Home Insurance">
-                Home Insurance
-              </option>
-
+              <option value="">Select Product</option>
+              {productOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </select>
-
             {errors.productName && (
               <p className="mt-1 text-sm text-red-600">
                 {errors.productName}
               </p>
             )}
-
           </div>
 
           {/* Footer */}
-
           <div className="flex justify-end gap-3 border-t pt-5">
-
             <button
               type="button"
               disabled={loading}
@@ -280,18 +306,11 @@ export default function CreateProposalModal({
               {loading && (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
               )}
-
-              {loading
-                ? "Creating..."
-                : "Create Proposal"}
+              {loading ? "Creating..." : "Create Proposal"}
             </button>
-
           </div>
-
         </form>
-
       </div>
-
     </div>
   );
 }
