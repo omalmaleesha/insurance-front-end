@@ -1,31 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-export interface UserDTO {
-  etfNo: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phoneNumber: string;
-  nic: string;
-  gender: "MALE" | "FEMALE";
-  dateOfBirth: string;
-  address: string;
-  designation: string;
-  employeeType: "PERMANENT" | "CONTRACT";
-  specialization: string;
-  underwritingLimit: number;
-  approvalLevel: number;
-  branchCode: string;
-  department: string;
-  status: "ACTIVE" | "INACTIVE";
-  joinedDate: string;
-  role: "ADMIN" | "USER" | "UNDERWRITER";
-}
+import { CreateUserDTO } from "../lib/types/user";
+import {
+  UserPlus,
+  ArrowLeft,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Loader2,
+} from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -33,7 +20,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const [formData, setFormData] = useState<UserDTO>({
+  const [formData, setFormData] = useState<CreateUserDTO>({
     etfNo: "",
     firstName: "",
     lastName: "",
@@ -56,54 +43,84 @@ export default function RegisterPage() {
     role: "USER",
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? Number(value) : value,
-    }));
-  };
+  // Clear error as soon as user starts typing
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+      const { name, value, type } = e.target;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "number" ? Number(value) : value,
+      }));
 
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      if (error) setError(null);
+    },
+    [error]
+  );
 
-      if (!res.ok) {
-        throw new Error("Registration failed. Please check your inputs.");
+  const toggleShowPassword = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.message || "Registration failed. Please check your inputs.");
+        }
+
+        router.push("/login");
+      } catch (err: any) {
+        setError(err.message || "Something went wrong.");
+      } finally {
+        setLoading(false);
       }
+    },
+    [formData, router]
+  );
 
-      router.push("/login");
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Disable button when loading or required fields are empty
+  const isSubmitDisabled = useMemo(() => {
+    return (
+      loading ||
+      !formData.etfNo.trim() ||
+      !formData.firstName.trim() ||
+      !formData.lastName.trim() ||
+      !formData.email.trim() ||
+      !formData.password ||
+      !formData.phoneNumber.trim() ||
+      !formData.nic.trim() ||
+      !formData.dateOfBirth ||
+      !formData.address.trim() ||
+      !formData.designation.trim() ||
+      !formData.department.trim() ||
+      !formData.branchCode.trim() ||
+      !formData.specialization.trim()
+    );
+  }, [loading, formData]);
 
   const inputClass =
-    "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15";
+    "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 focus-visible:ring-4 focus-visible:ring-emerald-500/20";
 
   const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-800">
-      {/* Background mesh */}
+      {/* Lighter background */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-emerald-200/40 blur-3xl" />
-        <div className="absolute -bottom-40 -right-32 h-[28rem] w-[28rem] rounded-full bg-teal-200/30 blur-3xl" />
-        <div className="absolute left-1/2 top-1/4 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-100/40 blur-3xl" />
+        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-emerald-200/30 blur-2xl" />
+        <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-teal-200/25 blur-2xl" />
       </div>
 
       <div className="relative mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -111,19 +128,7 @@ export default function RegisterPage() {
         <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-lg shadow-emerald-200">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                />
-              </svg>
+              <UserPlus className="h-6 w-6" aria-hidden="true" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -137,60 +142,36 @@ export default function RegisterPage() {
 
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Back to Sign in
           </Link>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm text-rose-700">
-            <svg
-              className="mt-0.5 h-5 w-5 shrink-0 text-rose-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mb-6 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm text-rose-700"
+          >
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-500" aria-hidden="true" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           {/* ─── Section 1: Personal Details ─────────────────────────── */}
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/40">
             <div className="border-b border-slate-100 bg-slate-50/70 px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-sm font-bold">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-sm font-bold text-emerald-700">
                   1
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">
-                    Personal Details
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Basic identity and contact information
-                  </p>
+                  <h2 className="text-sm font-semibold text-slate-900">Personal Details</h2>
+                  <p className="text-xs text-slate-500">Basic identity and contact information</p>
                 </div>
               </div>
             </div>
@@ -198,10 +179,13 @@ export default function RegisterPage() {
             <div className="p-6">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className={labelClass}>ETF No *</label>
+                  <label htmlFor="etfNo" className={labelClass}>
+                    ETF No *
+                  </label>
                   <input
-                    type="text"
+                    id="etfNo"
                     name="etfNo"
+                    type="text"
                     required
                     placeholder="ETF-10293"
                     value={formData.etfNo}
@@ -211,10 +195,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>First Name *</label>
+                  <label htmlFor="firstName" className={labelClass}>
+                    First Name *
+                  </label>
                   <input
-                    type="text"
+                    id="firstName"
                     name="firstName"
+                    type="text"
                     required
                     placeholder="John"
                     value={formData.firstName}
@@ -224,10 +211,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Last Name *</label>
+                  <label htmlFor="lastName" className={labelClass}>
+                    Last Name *
+                  </label>
                   <input
-                    type="text"
+                    id="lastName"
                     name="lastName"
+                    type="text"
                     required
                     placeholder="Doe"
                     value={formData.lastName}
@@ -237,10 +227,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>NIC / National ID *</label>
+                  <label htmlFor="nic" className={labelClass}>
+                    NIC / National ID *
+                  </label>
                   <input
-                    type="text"
+                    id="nic"
                     name="nic"
+                    type="text"
                     required
                     placeholder="199812345678"
                     value={formData.nic}
@@ -250,10 +243,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Phone Number *</label>
+                  <label htmlFor="phoneNumber" className={labelClass}>
+                    Phone Number *
+                  </label>
                   <input
-                    type="tel"
+                    id="phoneNumber"
                     name="phoneNumber"
+                    type="tel"
                     required
                     placeholder="+94 77 123 4567"
                     value={formData.phoneNumber}
@@ -263,8 +259,11 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Gender *</label>
+                  <label htmlFor="gender" className={labelClass}>
+                    Gender *
+                  </label>
                   <select
+                    id="gender"
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
@@ -276,10 +275,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Date of Birth *</label>
+                  <label htmlFor="dateOfBirth" className={labelClass}>
+                    Date of Birth *
+                  </label>
                   <input
-                    type="date"
+                    id="dateOfBirth"
                     name="dateOfBirth"
+                    type="date"
                     required
                     value={formData.dateOfBirth}
                     onChange={handleChange}
@@ -288,10 +290,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className={labelClass}>Residential Address *</label>
+                  <label htmlFor="address" className={labelClass}>
+                    Residential Address *
+                  </label>
                   <input
-                    type="text"
+                    id="address"
                     name="address"
+                    type="text"
                     required
                     placeholder="123 Main St, Colombo"
                     value={formData.address}
@@ -307,16 +312,12 @@ export default function RegisterPage() {
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/40">
             <div className="border-b border-slate-100 bg-slate-50/70 px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-sm font-bold">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-sm font-bold text-emerald-700">
                   2
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">
-                    Employment & Operations
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Role, department, and authority levels
-                  </p>
+                  <h2 className="text-sm font-semibold text-slate-900">Employment & Operations</h2>
+                  <p className="text-xs text-slate-500">Role, department, and authority levels</p>
                 </div>
               </div>
             </div>
@@ -324,10 +325,13 @@ export default function RegisterPage() {
             <div className="p-6">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className={labelClass}>Designation *</label>
+                  <label htmlFor="designation" className={labelClass}>
+                    Designation *
+                  </label>
                   <input
-                    type="text"
+                    id="designation"
                     name="designation"
+                    type="text"
                     required
                     placeholder="Senior Underwriter"
                     value={formData.designation}
@@ -337,10 +341,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Department *</label>
+                  <label htmlFor="department" className={labelClass}>
+                    Department *
+                  </label>
                   <input
-                    type="text"
+                    id="department"
                     name="department"
+                    type="text"
                     required
                     placeholder="Marine Insurance"
                     value={formData.department}
@@ -350,10 +357,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Branch Code *</label>
+                  <label htmlFor="branchCode" className={labelClass}>
+                    Branch Code *
+                  </label>
                   <input
-                    type="text"
+                    id="branchCode"
                     name="branchCode"
+                    type="text"
                     required
                     placeholder="BR-001"
                     value={formData.branchCode}
@@ -363,8 +373,11 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Employee Type *</label>
+                  <label htmlFor="employeeType" className={labelClass}>
+                    Employee Type *
+                  </label>
                   <select
+                    id="employeeType"
                     name="employeeType"
                     value={formData.employeeType}
                     onChange={handleChange}
@@ -376,10 +389,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Specialization *</label>
+                  <label htmlFor="specialization" className={labelClass}>
+                    Specialization *
+                  </label>
                   <input
-                    type="text"
+                    id="specialization"
                     name="specialization"
+                    type="text"
                     required
                     placeholder="Aviation Claims / Health"
                     value={formData.specialization}
@@ -389,10 +405,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Joined Date *</label>
+                  <label htmlFor="joinedDate" className={labelClass}>
+                    Joined Date *
+                  </label>
                   <input
-                    type="date"
+                    id="joinedDate"
                     name="joinedDate"
+                    type="date"
                     required
                     value={formData.joinedDate}
                     onChange={handleChange}
@@ -401,10 +420,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Underwriting Limit ($)*</label>
+                  <label htmlFor="underwritingLimit" className={labelClass}>
+                    Underwriting Limit ($)*
+                  </label>
                   <input
-                    type="number"
+                    id="underwritingLimit"
                     name="underwritingLimit"
+                    type="number"
                     required
                     min="0"
                     value={formData.underwritingLimit}
@@ -414,10 +436,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Approval Level *</label>
+                  <label htmlFor="approvalLevel" className={labelClass}>
+                    Approval Level *
+                  </label>
                   <input
-                    type="number"
+                    id="approvalLevel"
                     name="approvalLevel"
+                    type="number"
                     required
                     min="1"
                     max="5"
@@ -434,16 +459,12 @@ export default function RegisterPage() {
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/40">
             <div className="border-b border-slate-100 bg-slate-50/70 px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-sm font-bold">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-sm font-bold text-emerald-700">
                   3
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">
-                    Account & Credentials
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Login details and system access
-                  </p>
+                  <h2 className="text-sm font-semibold text-slate-900">Account & Credentials</h2>
+                  <p className="text-xs text-slate-500">Login details and system access</p>
                 </div>
               </div>
             </div>
@@ -451,10 +472,13 @@ export default function RegisterPage() {
             <div className="p-6">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className={labelClass}>Email Address *</label>
+                  <label htmlFor="email" className={labelClass}>
+                    Email Address *
+                  </label>
                   <input
-                    type="email"
+                    id="email"
                     name="email"
+                    type="email"
                     required
                     placeholder="john.doe@company.com"
                     value={formData.email}
@@ -464,11 +488,14 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Password *</label>
+                  <label htmlFor="password" className={labelClass}>
+                    Password *
+                  </label>
                   <div className="relative">
                     <input
-                      type={showPassword ? "text" : "password"}
+                      id="password"
                       name="password"
+                      type={showPassword ? "text" : "password"}
                       required
                       placeholder="••••••••"
                       value={formData.password}
@@ -477,53 +504,26 @@ export default function RegisterPage() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600"
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
+                      onClick={toggleShowPassword}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-1 rounded-r-xl"
                     >
                       {showPassword ? (
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                          />
-                        </svg>
+                        <EyeOff className="h-5 w-5" aria-hidden="true" />
                       ) : (
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
+                        <Eye className="h-5 w-5" aria-hidden="true" />
                       )}
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className={labelClass}>System Role *</label>
+                  <label htmlFor="role" className={labelClass}>
+                    System Role *
+                  </label>
                   <select
+                    id="role"
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
@@ -536,8 +536,11 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Initial Status *</label>
+                  <label htmlFor="status" className={labelClass}>
+                    Initial Status *
+                  </label>
                   <select
+                    id="status"
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
@@ -557,7 +560,7 @@ export default function RegisterPage() {
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="font-semibold text-emerald-600 hover:text-emerald-700"
+                className="font-semibold text-emerald-600 transition-colors hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 rounded"
               >
                 Sign in here
               </Link>
@@ -565,48 +568,18 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+              disabled={isSubmitDisabled}
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/30 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 disabled:active:scale-100 sm:w-auto"
             >
               {loading ? (
                 <>
-                  <svg
-                    className="h-4 w-4 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   Creating Account...
                 </>
               ) : (
                 <>
                   Register User
-                  <svg
-                    className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                 </>
               )}
             </button>
