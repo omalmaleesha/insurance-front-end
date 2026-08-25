@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Hash,
 } from "lucide-react";
+import { ClaimActionCards } from "../components/ClaimActionCards";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -132,12 +133,15 @@ export default function ClaimDetailPage({ params }: PageProps) {
             </div>
           </section>
 
+          <ClaimActionCards claimId={claim.id} />
+
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <Link
               href="/dashboard/claims"
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <ArrowLeft className="h-4 w-4" />
+
               Back to List
             </Link>
           </section>
