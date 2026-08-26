@@ -44,8 +44,8 @@ export default function CustomerDetailPage({ params }: PageProps) {
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-        <p className="text-sm font-medium text-slate-500">Loading customer details…</p>
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <p className="text-sm font-medium text-slate-400">Loading customer details…</p>
       </div>
     );
   }
@@ -53,18 +53,18 @@ export default function CustomerDetailPage({ params }: PageProps) {
   if (isError || !customer) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-50">
-          <AlertTriangle className="h-7 w-7 text-rose-500" />
+        <div className="flex h-14 w-14 items-center justify-center rounded-full border border-rose-500/20 bg-rose-500/10">
+          <AlertTriangle className="h-7 w-7 text-rose-400" />
         </div>
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-slate-900">Customer not found</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-lg font-semibold text-slate-100">Customer not found</h2>
+          <p className="mt-1 text-sm text-slate-400">
             The customer you are looking for does not exist or has been removed.
           </p>
         </div>
         <Link
           href="/dashboard/customer"
-          className="mt-2 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          className="mt-2 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/30"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Customers
@@ -80,26 +80,26 @@ export default function CustomerDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      {/* ========== HEADER ========== */}
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard/customer"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/80 text-slate-300 shadow-sm transition hover:bg-slate-800 hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
 
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-100">
                 {displayName}
               </h1>
               <span
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${
                   isPersonal
-                    ? "bg-blue-50 text-blue-700"
-                    : "bg-purple-50 text-purple-700"
+                    ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                    : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
                 }`}
               >
                 {isPersonal ? (
@@ -113,31 +113,31 @@ export default function CustomerDetailPage({ params }: PageProps) {
                 )}
               </span>
             </div>
-            <p className="mt-0.5 text-sm text-slate-500">
+            <p className="mt-0.5 text-sm text-slate-400">
               {customer.customerCode}
             </p>
           </div>
         </div>
 
         <span
-          className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-sm font-semibold ${
+          className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold ${
             customer.status === Status.ACTIVE
-              ? "bg-emerald-100 text-emerald-800"
+              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
               : customer.status === Status.SUSPENDED
-              ? "bg-amber-100 text-amber-800"
-              : "bg-slate-100 text-slate-600"
+              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+              : "bg-slate-800 text-slate-400 border border-slate-700"
           }`}
         >
           {customer.status}
         </span>
       </div>
 
-      {/* ========== CONTENT ========== */}
+      {/* CONTENT */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* LEFT */}
         <div className="space-y-6 lg:col-span-2">
-          {/* Contact */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          {/* Contact Information */}
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl">
             <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
               Contact Information
             </h2>
@@ -155,9 +155,9 @@ export default function CustomerDetailPage({ params }: PageProps) {
             </div>
           </section>
 
-          {/* Personal */}
+          {/* Personal Details */}
           {isPersonal && (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl">
               <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Personal Details
               </h2>
@@ -170,9 +170,9 @@ export default function CustomerDetailPage({ params }: PageProps) {
             </section>
           )}
 
-          {/* Corporate */}
+          {/* Corporate Details */}
           {!isPersonal && (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl">
               <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Company Details
               </h2>
@@ -190,7 +190,7 @@ export default function CustomerDetailPage({ params }: PageProps) {
 
         {/* RIGHT */}
         <div className="space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl">
             <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
               Record Information
             </h2>
@@ -202,13 +202,13 @@ export default function CustomerDetailPage({ params }: PageProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl">
             <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
               Actions
             </h2>
             <Link
               href="/dashboard/customer"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to List
@@ -237,7 +237,7 @@ function InfoItem({
         {icon && <span className="text-slate-400">{icon}</span>}
         <span>{label}</span>
       </div>
-      <p className="mt-1.5 text-sm font-medium leading-snug text-slate-800">
+      <p className="mt-1.5 text-sm font-medium leading-snug text-slate-200">
         {value || "—"}
       </p>
     </div>

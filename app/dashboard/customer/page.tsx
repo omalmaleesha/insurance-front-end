@@ -49,7 +49,7 @@ export default function Customer() {
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("ALL");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
 
-  // Debounce search (important for performance)
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchKeyword.trim());
@@ -279,7 +279,6 @@ export default function Customer() {
 
         handleCloseModal();
       } catch (error) {
-        // Error handling can be improved with toast later
         console.error(error);
       }
     },
@@ -303,9 +302,9 @@ export default function Customer() {
     updateCorporateMutation.isPending;
 
   const inputClass =
-    "mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15";
+    "mt-1 w-full rounded-xl border border-slate-800 bg-slate-900/80 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15";
 
-  const labelClass = "block text-xs font-semibold text-slate-600";
+  const labelClass = "block text-xs font-semibold text-slate-300";
 
   return (
     <div className="space-y-6">
@@ -320,7 +319,7 @@ export default function Customer() {
               placeholder="Search by name, code, email..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+              className="w-full rounded-xl border border-slate-800 bg-slate-900/80 py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15"
             />
           </div>
 
@@ -328,7 +327,7 @@ export default function Customer() {
           <select
             value={selectedTypeFilter}
             onChange={(e) => setSelectedTypeFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+            className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15"
           >
             <option value="ALL">All Types</option>
             <option value={CustomerType.PERSONAL}>Personal</option>
@@ -339,7 +338,7 @@ export default function Customer() {
           <select
             value={selectedStatusFilter}
             onChange={(e) => setSelectedStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+            className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15"
           >
             <option value="ALL">All Statuses</option>
             <option value={Status.ACTIVE}>Active</option>
@@ -352,14 +351,14 @@ export default function Customer() {
         <div className="flex gap-2">
           <button
             onClick={() => handleOpenCreateModal(CustomerType.PERSONAL)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/30"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/30"
           >
             <User className="h-4 w-4" />
             Personal
           </button>
           <button
             onClick={() => handleOpenCreateModal(CustomerType.CORPORATE)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600 px-4 py-2.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/30"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-2.5 text-sm font-semibold text-indigo-400 transition hover:bg-indigo-500/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/30"
           >
             <Building2 className="h-4 w-4" />
             Corporate
@@ -368,10 +367,10 @@ export default function Customer() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-xl shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+            <thead className="bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
               <tr>
                 <th className="px-5 py-3.5 font-semibold">Code</th>
                 <th className="px-5 py-3.5 font-semibold">Name / Company</th>
@@ -382,12 +381,12 @@ export default function Customer() {
                 <th className="px-5 py-3.5 text-right font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-800/60">
               {isLoading || isSearching ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-400">
-                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
                       <span>Loading customers...</span>
                     </div>
                   </td>
@@ -395,7 +394,7 @@ export default function Customer() {
               ) : isError ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-16 text-center">
-                    <div className="flex flex-col items-center gap-2 text-rose-500">
+                    <div className="flex flex-col items-center gap-2 text-rose-400">
                       <AlertTriangle className="h-6 w-6" />
                       <span>Failed to load customers. Please try again.</span>
                     </div>
@@ -403,7 +402,7 @@ export default function Customer() {
                 </tr>
               ) : filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-16 text-center text-slate-400">
+                  <td colSpan={7} className="px-5 py-16 text-center text-slate-500">
                     No customers found.
                   </td>
                 </tr>
@@ -415,19 +414,19 @@ export default function Customer() {
                     : cust.companyName;
 
                   return (
-                    <tr key={cust.id} className="transition hover:bg-slate-50/70">
-                      <td className="px-5 py-3.5 font-medium text-slate-900">
+                    <tr key={cust.id} className="transition hover:bg-slate-800/40">
+                      <td className="px-5 py-3.5 font-medium text-slate-100">
                         {cust.customerCode}
                       </td>
-                      <td className="px-5 py-3.5 font-medium text-slate-800">
+                      <td className="px-5 py-3.5 font-medium text-slate-200">
                         {displayName}
                       </td>
                       <td className="px-5 py-3.5">
                         <span
                           className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${
                             isPersonal
-                              ? "bg-blue-50 text-blue-700"
-                              : "bg-purple-50 text-purple-700"
+                              ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
                           }`}
                         >
                           {isPersonal ? (
@@ -442,20 +441,20 @@ export default function Customer() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <div className="text-slate-700">{cust.email}</div>
+                        <div className="text-slate-200">{cust.email}</div>
                         <div className="text-xs text-slate-400">{cust.phoneNumber}</div>
                       </td>
-                      <td className="px-5 py-3.5 text-slate-600">
+                      <td className="px-5 py-3.5 text-slate-300">
                         {cust.city}, {cust.country}
                       </td>
                       <td className="px-5 py-3.5">
                         <span
                           className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                             cust.status === Status.ACTIVE
-                              ? "bg-emerald-100 text-emerald-800"
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                               : cust.status === Status.SUSPENDED
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-slate-100 text-slate-600"
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : "bg-slate-800 text-slate-400 border border-slate-700"
                           }`}
                         >
                           {cust.status}
@@ -466,7 +465,7 @@ export default function Customer() {
                           {/* View Button */}
                           <Link
                             href={`/dashboard/customer/${cust.id}`}
-                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-200"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             View
@@ -475,7 +474,7 @@ export default function Customer() {
                           {/* Edit Button */}
                           <button
                             onClick={() => handleOpenEditModal(cust)}
-                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50"
+                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-indigo-400 transition hover:bg-indigo-500/10 hover:text-indigo-300"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                             Edit
@@ -485,7 +484,7 @@ export default function Customer() {
                           <button
                             onClick={() => handleDelete(cust.id)}
                             disabled={deleteCustomerMutation.isPending}
-                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-rose-400 transition hover:bg-rose-500/10 hover:text-rose-300 disabled:opacity-50"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             Delete
@@ -504,24 +503,24 @@ export default function Customer() {
       {/* Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
         >
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
             {/* Modal Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900/90 px-6 py-4 backdrop-blur-md">
               <div>
-                <h3 className="text-lg font-bold text-slate-800">
+                <h3 className="text-lg font-bold text-slate-100">
                   {editingCustomer ? "Edit Customer" : "Add New Customer"}
                 </h3>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-400">
                   {formType === CustomerType.PERSONAL ? "Personal Customer" : "Corporate Customer"}
                 </p>
               </div>
               <button
                 onClick={handleCloseModal}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-200"
                 aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
@@ -862,7 +861,10 @@ export default function Customer() {
                         type="text"
                         value={corporateForm.website}
                         onChange={(e) =>
-                          setCorporateForm({ ...corporateForm, website: e.target.value })
+                          setCorporateForm({
+                            ...corporateForm,
+                            website: e.target.value,
+                          })
                         }
                         className={inputClass}
                       />
@@ -952,26 +954,22 @@ export default function Customer() {
                 </>
               )}
 
-              {/* Actions */}
-              <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                  className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:opacity-50"
                 >
                   {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {isSubmitting
-                    ? "Saving..."
-                    : editingCustomer
-                    ? "Update Customer"
-                    : "Create Customer"}
+                  {editingCustomer ? "Update Customer" : "Create Customer"}
                 </button>
               </div>
             </form>
