@@ -21,10 +21,11 @@ import {
   AlertTriangle,
   FileWarning,
   X,
+  RotateCcw,
 } from "lucide-react";
 
 export default function ClaimsPage() {
-  const { data: claims = [], isLoading, isError } = useClaims();
+  const { data: claims = [], isLoading, isError, refetch } = useClaims();
   const createClaim = useCreateClaim();
   const deleteClaim = useDeleteClaim();
 
@@ -44,6 +45,14 @@ export default function ClaimsPage() {
     situationStatement: "",
     branchCode: "",
   });
+
+  const handleReload = () => {
+    if (refetch) {
+      refetch();
+    } else {
+      window.location.reload();
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -123,43 +132,53 @@ export default function ClaimsPage() {
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
-      REPORTED: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-      UNDER_REVIEW: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-      APPROVED: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-      REJECTED: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
-      CLOSED: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
+      REPORTED: "bg-amber-500/10 text-amber-400 border border-amber-500/30",
+      UNDER_REVIEW: "bg-blue-500/10 text-blue-400 border border-blue-500/30",
+      APPROVED: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30",
+      REJECTED: "bg-rose-500/10 text-rose-400 border border-rose-500/30",
+      CLOSED: "bg-slate-800 text-slate-400 border border-slate-700",
     };
-    return map[status] || "bg-slate-100 text-slate-600 ring-1 ring-slate-200";
+    return map[status] || "bg-slate-800 text-slate-400 border border-slate-700";
   };
 
   const inputClass =
-    "mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15";
+    "mt-1.5 w-full rounded-xl border border-slate-700/80 bg-[#0f172a] px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 rounded-3xl bg-[#070d19] p-6 text-slate-100 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-6">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+          <h2 className="text-xl font-bold tracking-tight text-slate-100 sm:text-2xl">
             Claim Management
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-400">
             Register and manage insurance claims from the hotline
           </p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowCreateModal(true);
-          }}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700"
-        >
-          <Plus className="h-4 w-4" />
-          New Claim
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleReload}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white"
+            title="Reload claims list"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reload
+          </button>
+          <button
+            onClick={() => {
+              resetForm();
+              setShowCreateModal(true);
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-500 active:scale-95"
+          >
+            <Plus className="h-4 w-4" />
+            New Claim
+          </button>
+        </div>
       </div>
 
-      {/* Summary */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <SummaryCard title="Total" value={stats.total} />
         <SummaryCard title="Reported" value={stats.reported} accent="amber" />
@@ -169,20 +188,20 @@ export default function ClaimsPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-800/80 bg-[#0b1329]/90 p-4 shadow-xl backdrop-blur-sm sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by claim number, location, customer ID, branch…"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+            className="w-full rounded-xl border border-slate-700/80 bg-[#0f172a] py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+          className="rounded-xl border border-slate-700/80 bg-[#0f172a] px-3.5 py-2.5 text-sm text-slate-300 outline-none transition focus:border-blue-500"
         >
           <option value="ALL">All Status</option>
           {Object.values(ClaimStatus).map((s) => (
@@ -192,7 +211,7 @@ export default function ClaimsPage() {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+          className="rounded-xl border border-slate-700/80 bg-[#0f172a] px-3.5 py-2.5 text-sm text-slate-300 outline-none transition focus:border-blue-500"
         >
           <option value="ALL">All Types</option>
           {Object.values(ClaimType).map((t) => (
@@ -201,72 +220,86 @@ export default function ClaimsPage() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      {/* Data Table */}
+      <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0b1329]/90 shadow-xl backdrop-blur-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100 text-sm">
-            <thead className="bg-slate-50/80">
+          <table className="min-w-full divide-y divide-slate-800/80 text-sm">
+            <thead className="bg-[#0f172a]">
               <tr>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Claim No</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Customer</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Type</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Location</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Incident Date</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase text-slate-500">Status</th>
-                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase text-slate-500">Actions</th>
+                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Claim No</th>
+                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Customer</th>
+                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Type</th>
+                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Location</th>
+                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Incident Date</th>
+                <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
+                <th className="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-800/60">
               {isLoading && (
                 <tr>
                   <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-400">
-                      <Loader2 className="h-7 w-7 animate-spin" />
-                      <span>Loading claims…</span>
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+                      <span className="text-sm font-medium">Loading claim records…</span>
                     </div>
                   </td>
                 </tr>
               )}
+
               {isError && (
                 <tr>
                   <td colSpan={7} className="py-16 text-center">
-                    <div className="flex flex-col items-center gap-2 text-rose-500">
-                      <AlertTriangle className="h-7 w-7" />
-                      <span>Failed to load claims</span>
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 border border-rose-500/20">
+                        <AlertTriangle className="h-6 w-6 text-rose-400" />
+                      </div>
+                      <p className="text-base font-semibold text-slate-200">Failed to load claims</p>
+                      <p className="text-xs text-slate-400">A network or server error occurred while retrieving data.</p>
+                      <button
+                        onClick={handleReload}
+                        className="mt-2 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-500"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Try Again
+                      </button>
                     </div>
                   </td>
                 </tr>
               )}
+
               {!isLoading && !isError && filtered.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-16 text-center text-slate-400">
-                    <FileWarning className="mx-auto mb-3 h-8 w-8 opacity-50" />
-                    No claims found
+                    <FileWarning className="mx-auto mb-3 h-8 w-8 text-slate-500" />
+                    No claims found matching your filter criteria
                   </td>
                 </tr>
               )}
+
               {!isLoading &&
+                !isError &&
                 filtered.map((claim) => (
-                  <tr key={claim.id} className="transition hover:bg-slate-50/70">
-                    <td className="whitespace-nowrap px-5 py-3.5 font-semibold text-slate-900">
+                  <tr key={claim.id} className="transition hover:bg-slate-800/40">
+                    <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-100">
                       {claim.claimNumber}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-700">#{claim.customerId}</td>
-                    <td className="px-5 py-3.5 text-slate-700">{claim.claimType}</td>
-                    <td className="px-5 py-3.5 text-slate-600">{claim.incidentLocation}</td>
-                    <td className="whitespace-nowrap px-5 py-3.5 text-slate-600">
+                    <td className="px-5 py-4 text-slate-300">#{claim.customerId}</td>
+                    <td className="px-5 py-4 text-slate-300">{claim.claimType}</td>
+                    <td className="px-5 py-4 text-slate-400">{claim.incidentLocation}</td>
+                    <td className="whitespace-nowrap px-5 py-4 text-slate-400">
                       {new Date(claim.incidentDate).toLocaleString()}
                     </td>
-                    <td className="px-5 py-3.5">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadge(claim.status)}`}>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium tracking-wide ${statusBadge(claim.status)}`}>
                         {claim.status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/dashboard/claims/${claim.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-900/60 px-3 py-1.5 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/10 hover:border-blue-500/30"
                         >
                           <Eye className="h-3.5 w-3.5" />
                           View
@@ -277,7 +310,7 @@ export default function ClaimsPage() {
                             claim.status !== ClaimStatus.REPORTED ||
                             actionLoadingId === claim.id
                           }
-                          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-900/60 px-3 py-1.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/10 hover:border-rose-500/30 disabled:cursor-not-allowed disabled:opacity-30"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Delete
@@ -293,16 +326,16 @@ export default function ClaimsPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-            <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-800 bg-[#0b1329] text-slate-100 shadow-2xl">
+            <div className="sticky top-0 flex items-center justify-between border-b border-slate-800 bg-[#0b1329] px-6 py-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Create New Claim</h3>
-                <p className="text-sm text-slate-500">Hotline staff – register incident details</p>
+                <h3 className="text-lg font-bold text-slate-100">Create New Claim</h3>
+                <p className="text-xs text-slate-400">Hotline staff – register incident details</p>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -311,7 +344,7 @@ export default function ClaimsPage() {
             <form onSubmit={handleCreate} className="space-y-4 p-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Customer ID *</label>
+                  <label className="text-xs font-medium text-slate-400">Customer ID *</label>
                   <input
                     type="number"
                     required
@@ -325,7 +358,7 @@ export default function ClaimsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Created By (ETF No) *</label>
+                  <label className="text-xs font-medium text-slate-400">Created By (ETF No) *</label>
                   <input
                     type="text"
                     required
@@ -338,7 +371,7 @@ export default function ClaimsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Claim Type *</label>
+                  <label className="text-xs font-medium text-slate-400">Claim Type *</label>
                   <select
                     value={form.claimType}
                     onChange={(e) =>
@@ -352,7 +385,7 @@ export default function ClaimsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Branch Code *</label>
+                  <label className="text-xs font-medium text-slate-400">Branch Code *</label>
                   <input
                     type="text"
                     required
@@ -365,7 +398,7 @@ export default function ClaimsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Incident Date & Time *</label>
+                  <label className="text-xs font-medium text-slate-400">Incident Date & Time *</label>
                   <input
                     type="datetime-local"
                     required
@@ -377,7 +410,7 @@ export default function ClaimsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Incident Location *</label>
+                  <label className="text-xs font-medium text-slate-400">Incident Location *</label>
                   <input
                     type="text"
                     required
@@ -392,7 +425,7 @@ export default function ClaimsPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600">Incident Description *</label>
+                <label className="text-xs font-medium text-slate-400">Incident Description *</label>
                 <textarea
                   required
                   rows={3}
@@ -406,7 +439,7 @@ export default function ClaimsPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600">Situation Statement</label>
+                <label className="text-xs font-medium text-slate-400">Situation Statement</label>
                 <textarea
                   rows={2}
                   value={form.situationStatement || ""}
@@ -418,18 +451,18 @@ export default function ClaimsPage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+              <div className="flex justify-end gap-3 border-t border-slate-800/80 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-700/80 bg-slate-900/60 px-5 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createClaim.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 disabled:opacity-50"
                 >
                   {createClaim.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                   {createClaim.isPending ? "Creating…" : "Create Claim"}
@@ -452,17 +485,18 @@ function SummaryCard({
   value: number;
   accent?: "slate" | "amber" | "blue" | "emerald" | "rose";
 }) {
-  const colors = {
-    slate: "text-slate-900",
-    amber: "text-amber-600",
-    blue: "text-blue-600",
-    emerald: "text-emerald-600",
-    rose: "text-rose-600",
+  const accentStyles = {
+    slate: "text-slate-100 bg-[#0b1329]/90 border-slate-800/80",
+    amber: "text-amber-400 bg-amber-500/5 border-amber-500/20",
+    blue: "text-blue-400 bg-blue-500/5 border-blue-500/20",
+    emerald: "text-emerald-400 bg-emerald-500/5 border-emerald-500/20",
+    rose: "text-rose-400 bg-rose-500/5 border-rose-500/20",
   };
+
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</p>
-      <p className={`mt-2 text-3xl font-bold tracking-tight ${colors[accent]}`}>{value}</p>
+    <div className={`rounded-2xl border p-5 shadow-lg backdrop-blur-sm ${accentStyles[accent]}`}>
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{title}</p>
+      <p className="mt-2 text-3xl font-bold tracking-tight">{value}</p>
     </div>
   );
 }
