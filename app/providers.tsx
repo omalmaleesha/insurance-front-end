@@ -8,6 +8,7 @@ export default function Providers({
 }: {
   children: React.ReactNode;
 }) {
+  
   return (
     <QueryClientProvider client={queryClient}>
       {children}

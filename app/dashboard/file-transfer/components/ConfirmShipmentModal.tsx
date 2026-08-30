@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useShipmentItems } from "../hooks/useShipmentItems";
+import { useShipmentItems } from "../../file-transfer/hooks/useShipmentItems";
 import { useDispatchShipment } from "../hooks/useDispatchShipment"; // Adjust import path
 
 interface ConfirmShipmentModalProps {
