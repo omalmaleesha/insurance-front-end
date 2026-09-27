@@ -3,6 +3,7 @@ import api from "../lib/apiClient";
 import {
   ClaimDocument,
   UploadClaimDocumentRequest,
+  GReportResponse,
 } from "../lib/types/claimDocument";
 
 export const claimDocumentService = {
@@ -149,4 +150,17 @@ export const claimDocumentService = {
       `/api/claims/documents/${documentId}`
     );
   },
+
+
+  getGReport: async (
+    claimId: number
+  ): Promise<GReportResponse> => {
+    const response = await api.get<GReportResponse>(
+      `/api/claims/${claimId}/g-report`
+    );
+
+    return response.data;
+  },
+
+  
 };

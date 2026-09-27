@@ -1,9 +1,13 @@
 export enum ClaimType {
   MOTOR = "MOTOR",
-  PROPERTY = "PROPERTY",
   HEALTH = "HEALTH",
+  PROPERTY = "PROPERTY",
+  FIRE = "FIRE",
   TRAVEL = "TRAVEL",
   OTHER = "OTHER",
+  BUSINESS_PREMISES = "BUSINESS_PREMISES",
+  INDUSTRIAL_PREMISES = "INDUSTRIAL_PREMISES",
+  PRIVATE_HOUSE = "PRIVATE_HOUSE",
 }
 
 export enum ClaimStatus {
@@ -16,12 +20,13 @@ export enum ClaimStatus {
 
 export interface ClaimCreateRequest {
   customerId: number;
-  createdByEtfNo: string;
+  policyNumber: string;
   claimType: ClaimType;
-  incidentDate: string; // ISO datetime
+  incidentDate: string;
   incidentLocation: string;
   incidentDescription: string;
   situationStatement?: string;
+  createdByEtfNo: string;
   branchCode: string;
 }
 
@@ -50,3 +55,4 @@ export interface Claim {
   createdAt: string;
   updatedAt: string;
 }
+

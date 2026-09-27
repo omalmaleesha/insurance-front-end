@@ -117,3 +117,19 @@ export function useDeleteClaimDocument(
     },
   });
 }
+
+
+export function useGReport(
+  claimId: number
+) {
+  return useQuery({
+    queryKey: ["g-report", claimId],
+
+    queryFn: () =>
+      claimDocumentService.getGReport(
+        claimId
+      ),
+
+    enabled: !!claimId,
+  });
+}

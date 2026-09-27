@@ -36,15 +36,16 @@ export default function ClaimsPage() {
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
   const [form, setForm] = useState<ClaimCreateRequest>({
-    customerId: 0,
-    createdByEtfNo: "",
-    claimType: ClaimType.MOTOR,
-    incidentDate: "",
-    incidentLocation: "",
-    incidentDescription: "",
-    situationStatement: "",
-    branchCode: "",
-  });
+  customerId: 0,
+  policyNumber: "",
+  createdByEtfNo: "",
+  claimType: ClaimType.FIRE,
+  incidentDate: "",
+  incidentLocation: "",
+  incidentDescription: "",
+  situationStatement: "",
+  branchCode: "",
+});
 
   const handleReload = () => {
     if (refetch) {
@@ -84,17 +85,18 @@ export default function ClaimsPage() {
   }, [claims]);
 
   const resetForm = useCallback(() => {
-    setForm({
-      customerId: 0,
-      createdByEtfNo: "",
-      claimType: ClaimType.MOTOR,
-      incidentDate: "",
-      incidentLocation: "",
-      incidentDescription: "",
-      situationStatement: "",
-      branchCode: "",
-    });
-  }, []);
+  setForm({
+    customerId: 0,
+    policyNumber: "",
+    createdByEtfNo: "",
+    claimType: ClaimType.FIRE,
+    incidentDate: "",
+    incidentLocation: "",
+    incidentDescription: "",
+    situationStatement: "",
+    branchCode: "",
+  });
+}, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -357,6 +359,25 @@ export default function ClaimsPage() {
                     placeholder="e.g. 1"
                   />
                 </div>
+                <div>
+  <label className="text-xs font-medium text-slate-400">
+    Policy Number *
+  </label>
+
+  <input
+    type="text"
+    required
+    value={form.policyNumber}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        policyNumber: e.target.value,
+      })
+    }
+    className={inputClass}
+    placeholder="POL-2026-0002"
+  />
+</div>
                 <div>
                   <label className="text-xs font-medium text-slate-400">Created By (ETF No) *</label>
                   <input

@@ -48,3 +48,25 @@ export interface UploadClaimDocumentRequest {
   documentSource: string;
   uploadedByEtfNo: string;
 }
+
+
+
+export type GReportJobStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "MANUAL_REVIEW";
+
+export interface GReportResponse {
+  id: number;
+  claimId: number;
+  status: GReportJobStatus;
+  attemptCount: number;
+  errorMessage: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  workerId: string | null;
+  lockedAt: string | null;
+  lastError: string | null;
+}

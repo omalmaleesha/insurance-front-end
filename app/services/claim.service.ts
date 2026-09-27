@@ -4,50 +4,54 @@ import {
   ClaimUpdateRequest,
 } from "../lib/types/claim";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api/claims`
-  : "http://localhost:8080/api/claims";
+import api from "../lib/apiClient";
 
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers || {}),
-    },
-  });
+const BASE = "/api/claims";
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Request failed: ${res.status}`);
-  }
+export const getAllClaims = async (): Promise<Claim[]> => {
+  const response = await api.get<Claim[]>(BASE);
+  return response.data;
+};
 
-  if (res.status === 204) return undefined as T;
-  return res.json();
-}
+export const getClaimById = async (id: number): Promise<Claim> => {
+  const response = await api.get<Claim>(`${BASE}/${id}`);
+  return response.data;
+};
 
-export const getAllClaims = () => request<Claim[]>(BASE);
+export const getClaimByNumber = async (
+  claimNumber: string
+): Promise<Claim> => {
+  const response = await api.get<Claim>(
+    `${BASE}/number/${encodeURIComponent(claimNumber)}`
+  );
+  return response.data;
+};
 
-export const getClaimById = (id: number) =>
-  request<Claim>(`${BASE}/${id}`);
+export const getClaimsByCustomer = async (
+  customerId: number
+): Promise<Claim[]> => {
+  const response = await api.get<Claim[]>(
+    `${BASE}/customer/${customerId}`
+  );
+  return response.data;
+};
 
-export const getClaimByNumber = (claimNumber: string) =>
-  request<Claim>(`${BASE}/number/${encodeURIComponent(claimNumber)}`);
+export const createClaim = async (
+  data: ClaimCreateRequest
+): Promise<Claim> => {
+  const response = await api.post<Claim>(BASE, data);
+  return response.data;
+};
 
-export const getClaimsByCustomer = (customerId: number) =>
-  request<Claim[]>(`${BASE}/customer/${customerId}`);
+export const updateClaim = async (
+  id: number,
+  data: ClaimUpdateRequest
+): Promise<Claim> => {
+  const response = await api.put<Claim>(`${BASE}/${id}`, data);
+  return response.data;
+};
 
-export const createClaim = (data: ClaimCreateRequest) =>
-  request<Claim>(BASE, {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
+export const deleteClaim = async (id: number): Promise<void> => {
+  await api.delete(`${BASE}/${id}`);
+};
 
-export const updateClaim = (id: number, data: ClaimUpdateRequest) =>
-  request<Claim>(`${BASE}/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-
-export const deleteClaim = (id: number) =>
-  request<void>(`${BASE}/${id}`, { method: "DELETE" });
